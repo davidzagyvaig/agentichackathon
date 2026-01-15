@@ -1,0 +1,277 @@
+ 
+WELCOME to our Hackathon 
+ 
+1. Hackathon Context  
+Why this hackathon exists 
+In recent years, artificial intelligence has begun to change science in a fundamental way. 
+When AlphaFold demonstrated that protein structures could be predicted not one by one, but at 
+the scale of all known proteins, it became clear that AI was doing more than accelerating 
+existing research workflows. It was shifting scientific discovery from solving individual problems 
+to addressing entire problem classes at once. 
+More recently, we crossed another important threshold. Agentic AI systems have emerged that 
+can plan scientific workflows, integrate literature and data, carry out multi-step investigations, 
+and even generate research papers that pass peer review. This does not mean that science is 
+becoming automated. It means that the structure of scientific work itself is evolving. 
+This hackathon is designed in response to that shift. 
+ 
+What we mean by AI-First Science (AI1Science) 
+AI-First Science treats AI not as a supporting tool, but as a core layer of discovery. 
+An approach is AI-First when it: 
+• 
+enables order-of-magnitude improvements in speed (weeks becoming hours), 
+• 
+makes previously unmanageable or impossible questions tractable, 
+• 
+and reshapes the role of the scientist, reducing low-level coordination and increasing 
+focus on interpretation, judgment, and strategic decisions. 
+ 
+AI1Science is not about replacing researchers. It is about changing how scientific work is structured. 
+ 
+What is Agentic Discovery? 
+Agentic Discovery is a practical manifestation of AI-First Science. 
+Instead of isolated AI tools, it relies on agentic systems that can operate across entire 
+research processes. These systems can plan, iterate, connect data and methods, and 
+collaborate with humans over time. Rather than executing single instructions, they help explore 
+complex problem spaces and support non-linear discovery. 
+In this sense, agentic systems become part of the infrastructure of scientific discovery, not 
+just productivity tools. 
+ 
+ 
+
+ 
+What the Agentic Discovery Hackathon is (and is not) 
+The Agentic Discovery Hackathon is an experimental space. 
+It is not a product competition, and it is not focused on polished solutions. Its purpose is to 
+explore ideas that rethink scientific workflows from an AI-First perspective. We encourage 
+participants to move beyond incremental automation and to investigate how AI could 
+fundamentally change how research is conducted in their domain. 
+Early-stage and exploratory ideas are welcome—especially when they point toward new 
+scientific methods or workflows. 
+ 
+Tools provided during the hackathon 
+To support exploration, we provide access to tools such as the Agentic Discovery Platform 
+(see bellow), which integrates multiple agentic capabilities and external tools into a shared 
+research environment. 
+Use of these tools is not mandatory. They are offered as inspiration and as examples of how 
+agentic thinking can be implemented in practice. Teams are free to: 
+• 
+use the platform to explore a specific scientific domain, 
+• 
+assemble their own agentic workflows with tools such as n8n, 
+• 
+or build fully custom solutions through code. 
+What matters is not the specific tooling, but the AI-First way of thinking behind the idea. 
+ 
+Mentors, teams and shared learning 
+Throughout the hackathon, participants will be supported by a group of mentors who share this 
+mindset and have experience working with agentic systems and related tools. 
+Mentors are not assigned to individual teams. Instead, they support the collective goal of 
+maximizing learning, exploration, and constructive disruption across the two days. They can 
+help teams validate directions, improve workflows, and ground ambitious ideas in practical 
+considerations - even if they do not know every tool in depth.  
+If you don't have a pre-formed team, we will assign you to one, with team suggestions powered 
+by AI. For optimal results, ensure your team includes a combination of both domain science 
+expertise and agentic expertise, as the overlap of these skills is crucial. 
+ 
+How ideas and results will be evaluated 
+Projects will be evaluated along two dimensions: 
+1. Radical Innovation 
+This dimension asks how much the idea redefines scientific practice. 
+ For example: 
+• 
+Does it go beyond making existing steps faster? 
+
+ 
+• 
+Does it introduce a fundamentally new workflow or method? 
+• 
+Does it meaningfully change the role of the scientist? 
+ 
+2. Feasibility 
+This dimension considers whether the idea: 
+• 
+could realistically work in principle, 
+• 
+can be developed further beyond the hackathon, 
+• 
+and could fit into real research environments over time. 
+ 
+Our goal is to see project on the high-end of both dimensions, but we prefer radical innovation 
+over feasibility. 
+ 
+2. Schedule  
+Online Q&A session – Wednesday, January 14, 2026 16:00-17:30 
+ 
+Venue: 1054 Budapest, Alkotmány utca 29. 
+ 
+Time 
+Activity 
+Thursday, January 15 
+08:30 – 09:00 
+Arrival & Registration 
+ 
+09:00 – 09:30 
+Opening Session 
+ 
+09:30 – 12:30 
+Team Work 
+ 
+12:30 – 14:00 
+Lunch  
+ 
+14:00 – 18:00 
+Team Work 
+Friday, January 16 
+08:30 – 09:00 
+Arrival 
+ 
+09:00 – 12:30 
+Team Work 
+ 
+12:30 – 13:30 
+Lunch  
+ 
+13:30 – 15:30 
+Team Work 
+ 
+15:30 – 17:30 
+Final Pitches 
+ 
+17:30 – 18:00 
+Jury Deliberation 
+ 
+18:00 – 18:30 
+Awards & Closing 
+ 
+ 
+ 
+ 
+
+ 
+3. Messaging Platform  
+Registration Steps: 
+1. Register on Discord: https://discord.com/register 
+2. Verify your email address to activate your account. 
+3. Join our Community: https://discord.gg/BVvM6uEN. 
+4. Set your nickname on the server (please use your full name if it’s not already set, 
+optional otherwise): 
+a. 
+You can change your own nickname by clicking your profile in the server → Edit 
+Server Profile → Nickname. 
+b. 
+For a step-by-step guide, see Discord Nickname Tutorial. 
+Once you join the community: 
+● You will soon have access to your team’s channel: 
+○ Under the Teams category, look for the channel with your team’s name. 
+○ This is where you can discuss topics only with your team members. 
+○ A pinned message in your team’s channel will contain an API key for accessing 
+OpenAI’s models. 
+● In the General channel, you can discuss topics visible to all community members. 
+● In the Announcements channel, you can see our latest announcements and updates. 
+● In the t e c h- he l p- de s k channel, you can ask technical questions, e.g., your API key 
+does not work. 
+ 
+4. Resources  
+4.1 DATAGEN 
+Code: GitHub: https://github.com/starpig1129/DATAGEN 
+Publication: No official academic publication. 
+4.2 Denario 
+Code: GitHub: https://github.com/AstroPilot-AI/Denario 
+Article: arXiv: https://arxiv.org/abs/2510.26887 
+4.3 AstroAgents 
+Code: GitHub: https://github.com/amirgroup-codes/AstroAgents 
+Article: arXiv: https://arxiv.org/abs/2503.23170 
+ 
+ 
+4.4 AI Scientist v2 (Sakana AI) 
+
+ 
+Code: GitHub: https://github.com/SakanaAI/AI-Scientist-v2 
+Article: arXiv: https://arxiv.org/abs/2408.06292 
+4.5 Syxplain 
+Application: Web app: https://syxplain.ai1science.net/ 
+Please see the attached descriptions for further details. 
+ 
+5. OpenAI API Key Registration 
+A pinned message in your team’s channel will contain an API key for accessing OpenAI’s 
+models. See Section 3, Messaging Platform. 
+If you have any issues with your API Key, please contact us in the Discord tech-help-desk 
+channel. 
+ 
+6. ADP Registration  
+Follow these steps to create your account and access the platform: 
+1. Visit the Portal: Go to ai-scientist.ai1science.net. 
+2. Access the Sign-Up Page: On the login screen, click the link that says "Don't have an 
+account? Sign up!" 
+3. Enter Your Details: Provide a valid email address and create a secure password, then 
+click Sign Up. 
+4. Verify Your Email: Check your inbox for a verification email from Supabase. Click the 
+confirmation link within the email to activate your account. 
+5. Log In: Once verified, return to the login page and sign in with your new credentials. 
+ 
+
+ 
+7. Tools & Quick Tutorials 
+7.1 OpenAI  
+https://platform.openai.com/docs/quickstart 
+ 
+7.2 LangChain  
+https://academy.langchain.com/courses/langchain-essentials-python 
+ 
+7.3 n8n  
+From basics: https://youtu.be/ZHH3sr234zY?si=Fj8Xa_begAoCI9yJ 
+AI agents inspiration playlist (business): 
+https://youtube.com/playlist?list=PLvQWpZ46MVvgUUUBxnqLAu-JzA-
+6QA1o2&si=R9QANd8PJl-6n7aK 
+ 
+7.4 Syxplain 
+https://peertube.ai.kinin.hu/w/k3K2CD64SXa8AeL2QtvFzB  
+ 
+7.5 Agentic Discovery Platform 
+https://peertube.ai.kinin.hu/w/o2rSh6vMG8ngurai8SGewp  
+ 
+7.6 Dataverse  
+https://peertube.ai.kinin.hu/w/okdscUM1ZANuyb1VGajmk3 
+ 
+8. Selected Articles  
+8.1 AI Scientists  
+[1] F. Villaescusa-Navarro et al., “The Denario project: Deep knowledge AI agents for scientific 
+discovery,” Oct. 30, 2025, arXiv: arXiv:2510.26887. doi: 10.48550/arXiv.2510.26887. 
+[2] C. Lu, C. Lu, R. T. Lange, J. Foerster, J. Clune, and D. Ha, “The AI Scientist: Towards Fully 
+Automated Open-Ended Scientific Discovery,” Sep. 01, 2024, arXiv: arXiv:2408.06292. doi: 
+10.48550/arXiv.2408.06292. 
+[3] Y. Yamada et al., “The AI Scientist-v2: Workshop-Level Automated Scientific Discovery via 
+Agentic Tree Search,” Apr. 10, 2025, arXiv: arXiv:2504.08066. doi: 10.48550/arXiv.2504.08066. 
+[4] S. Guo et al., “IdeaBench: Benchmarking Large Language Models for Research Idea 
+Generation,” in Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery 
+and Data Mining V.2, in KDD ’25. New York, NY, USA: Association for Computing Machinery, 
+Aug. 2025, pp. 5888–5899. doi: 10.1145/3711896.3737419. 
+[5] G. Tie, P. Zhou, and L. Sun, “A Survey of AI Scientists,” Nov. 11, 2025, arXiv: 
+arXiv:2510.23045. doi: 10.48550/arXiv.2510.23045. 
+[6] D. Saeedi, D. Buckner, J. C. Aponte, and A. Aghazadeh, “AstroAgents: A Multi-Agent AI for 
+Hypothesis Generation from Mass Spectrometry Data,” arXiv.org. Accessed: Nov. 24, 2025. 
+[Online]. Available: https://arxiv.org/abs/2503.23170v1 
+[7] S. Schmidgall et al., “Agent Laboratory: Using LLM Agents as Research Assistants,” 
+arXiv.org. Accessed: Nov. 24, 2025. [Online]. Available: https://arxiv.org/abs/2501.04227v2 
+
+ 
+[8] T. Zheng et al., “From Automation to Autonomy: A Survey on Large Language Models in 
+Scientific Discovery,” Sep. 17, 2025, arXiv: arXiv:2505.13259. doi: 10.48550/arXiv.2505.13259. 
+8.2 Agentic Discovery Benchmarks  
+[1] K. Gandhi et al., “BoxingGym: Benchmarking Progress in Automated Experimental Design 
+and Model Discovery,” Oct. 14, 2025, arXiv: arXiv:2501.01540. doi: 
+10.48550/arXiv.2501.01540. 
+[2] P. Jansen et al., “DISCOVERYWORLD: A Virtual Environment for Developing and 
+Evaluating Automated Scientific Discovery Agents,” Oct. 07, 2024, arXiv: arXiv:2406.06769. doi: 
+10.48550/arXiv.2406.06769. 
+[3] J. Shi et al., “KORGym: A Dynamic Game Platform for LLM Reasoning Evaluation,” May 21, 
+2025, arXiv: arXiv:2505.14552. doi: 10.48550/arXiv.2505.14552. 
+[4] T. Zheng et al., “NewtonBench: Benchmarking Generalizable Scientific Law Discovery in 
+LLM Agents,” Dec. 09, 2025, arXiv: arXiv:2510.07172. doi: 10.48550/arXiv.2510.07172. 
+[5] Y. Chen, P. Piȩkos, M. Ostaszewski, F. Laakom, and J. Schmidhuber, “PhysGym: 
+Benchmarking LLMs in Interactive Physics Discovery with Controlled Priors,” Oct. 26, 2025, 
+arXiv: arXiv:2507.15550. doi: 10.48550/arXiv.2507.15550. 
+[6] B. P. Majumder et al., “DiscoveryBench: Towards Data-Driven Discovery with Large 
+Language Models,” Jul. 01, 2024, arXiv: arXiv:2407.01725. doi: 10.48550/arXiv.2407.01725. 
+ 
+ 
