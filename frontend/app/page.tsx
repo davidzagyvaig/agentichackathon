@@ -14,6 +14,7 @@ import {
   MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import ReactMarkdown from "react-markdown";
 
 // Types
 interface ClarificationQuestion {
@@ -305,49 +306,6 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden font-sans">
-      {/* Sidebar - History */}
-      <div className="w-[260px] bg-black hidden md:flex flex-col border-r border-gray-800">
-        <div className="p-3">
-          <button
-            onClick={() => {
-              setGraphVisible(false);
-              setMessages([]);
-              setAwaitingClarification(false);
-              setPendingClarifications({});
-              setResearchStage(null);
-              setMessages([
-                {
-                  id: "welcome",
-                  role: "assistant",
-                  content: "Hello! I'm ClaimGraph Deep Research. I conduct comprehensive scientific analysis using a knowledge graph of verified claims.\n\nAsk me about a topic (e.g., 'What is the relationship between gut microbiome and depression?'), and I'll analyze the evidence, identify contradictions, and provide a grounded research report.",
-                  timestamp: new Date(),
-                },
-              ]);
-            }}
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-200 bg-gray-900 hover:bg-gray-800 rounded-md transition-colors border border-gray-700"
-          >
-            <span>+</span> New Research
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-3 py-2">
-          <div className="text-xs font-semibold text-gray-500 mb-2 px-2">Recent</div>
-          <div className="space-y-1">
-            <button className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-900 rounded-md truncate transition-colors">
-              Gut microbiome depression...
-            </button>
-            <button className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-900 rounded-md truncate transition-colors">
-              Probiotic effectiveness...
-            </button>
-          </div>
-        </div>
-        <div className="p-4 border-t border-gray-800">
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <div className="w-6 h-6 rounded-full bg-green-900 flex items-center justify-center text-green-500 font-bold text-xs">U</div>
-            User Account
-          </div>
-        </div>
-      </div>
-
       {/* Main Content Split */}
       <div className="flex-1 flex flex-col md:flex-row h-full relative">
 
@@ -362,119 +320,123 @@ export default function Home() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-800">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {msg.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-full bg-green-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
-                    CG
-                  </div>
-                )}
-                <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-5 py-3 text-sm leading-relaxed ${msg.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-br-none'
-                  : 'bg-gray-800 text-gray-100 rounded-bl-none border border-gray-700'
-                  } ${msg.isThinking ? 'animate-pulse' : ''}`}>
-                  
-                  {/* Progress indicator for thinking state */}
-                  {msg.isThinking && researchStage && (
-                    <div className="flex items-center gap-2 p-2 bg-green-900/30 rounded-lg border border-green-700">
-                      <div className="animate-spin w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full" />
-                      <span className="text-sm text-green-300">
-                        {DEEP_RESEARCH_STAGES.find(s => s.id === researchStage)?.label}
-                      </span>
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-thumb-gray-800">
+            <div className="max-w-3xl mx-auto space-y-6">
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex gap-4 items-center ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.role === 'assistant' && (
+                    <div className="w-8 h-8 rounded-full bg-green-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
+                      CG
                     </div>
                   )}
-
-                  {/* Regular message content */}
-                  {!msg.isThinking && !msg.isDeepResearchReport && (
-                    <div className="whitespace-pre-wrap">{msg.content}</div>
-                  )}
-
-                  {/* Deep research report */}
-                  {msg.isDeepResearchReport && (
-                    <div className="space-y-4">
-                      <div className="p-4 bg-green-900/20 rounded-lg border border-green-700">
-                        <h4 className="text-green-300 font-semibold mb-2 flex items-center gap-2">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          Research Report
-                        </h4>
-                        <div 
-                          className="whitespace-pre-wrap text-gray-200"
-                          dangerouslySetInnerHTML={{ __html: formatReportContent(msg.content) }}
-                        />
+                  <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-5 py-3 text-sm leading-relaxed ${msg.role === 'user'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-800 text-gray-100 border border-gray-700'
+                    } ${msg.isThinking ? 'animate-pulse' : ''}`}>
+                    
+                    {/* Progress indicator for thinking state */}
+                    {msg.isThinking && researchStage && (
+                      <div className="flex items-center gap-2 p-2 bg-green-900/30 rounded-lg border border-green-700">
+                        <div className="animate-spin w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full" />
+                        <span className="text-sm text-green-300">
+                          {DEEP_RESEARCH_STAGES.find(s => s.id === researchStage)?.label}
+                        </span>
                       </div>
-                      
-                      {msg.contradictions && msg.contradictions.length > 0 && (
-                        <div className="p-3 bg-red-900/20 rounded-lg border border-red-700">
-                          <h5 className="text-red-300 font-semibold mb-2 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            Contradictions Found
-                          </h5>
-                          {msg.contradictions.map((c, i) => (
-                            <div key={i} className="text-sm text-red-200 py-1">{c.summary}</div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
 
-                  {/* Clarification questions */}
-                  {msg.clarifications && msg.clarifications.length > 0 && (
-                    <div className="space-y-3 mt-3">
-                      {msg.clarifications.map((q, i) => (
-                        <div key={i} className="p-3 bg-gray-700/50 rounded-lg">
-                          <p className="text-sm mb-2 text-gray-200">{q.question}</p>
-                          <div className="flex flex-wrap gap-2">
-                            {q.options && q.options.length > 0 ? (
-                              q.options.map((opt) => (
-                                <button
-                                  key={opt}
-                                  onClick={() => handleClarificationAnswer(q.question, opt)}
-                                  className={`px-3 py-1 rounded text-xs transition-colors ${
-                                    pendingClarifications[q.question] === opt
-                                      ? 'bg-green-600 text-white'
-                                      : 'bg-gray-600 hover:bg-gray-500 text-gray-200'
-                                  }`}
-                                >
-                                  {opt}
-                                </button>
-                              ))
-                            ) : (
-                              <input
-                                type="text"
-                                placeholder="Type your answer..."
-                                className="flex-1 px-3 py-1 bg-gray-600 rounded text-xs text-white placeholder-gray-400"
-                                onChange={(e) => handleClarificationAnswer(q.question, e.target.value)}
-                              />
-                            )}
-                          </div>
+                    {/* Regular message content */}
+                    {!msg.isThinking && !msg.isDeepResearchReport && (
+                      <div className="prose prose-invert prose-sm max-w-none prose-p:my-2 prose-strong:text-white">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    )}
+
+                    {/* Deep research report */}
+                    {msg.isDeepResearchReport && (
+                      <div className="space-y-4">
+                        <div className="p-4 bg-green-900/20 rounded-lg border border-green-700">
+                          <h4 className="text-green-300 font-semibold mb-2 flex items-center gap-2">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Research Report
+                          </h4>
+                          <div 
+                            className="whitespace-pre-wrap text-gray-200"
+                            dangerouslySetInnerHTML={{ __html: formatReportContent(msg.content) }}
+                          />
                         </div>
-                      ))}
-                      
-                      {awaitingClarification && (
-                        <button
-                          onClick={submitClarifications}
-                          disabled={Object.keys(pendingClarifications).length === 0}
-                          className="w-full py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors mt-2"
-                        >
-                          Continue Research →
-                        </button>
-                      )}
+                        
+                        {msg.contradictions && msg.contradictions.length > 0 && (
+                          <div className="p-3 bg-red-900/20 rounded-lg border border-red-700">
+                            <h5 className="text-red-300 font-semibold mb-2 flex items-center gap-2">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              Contradictions Found
+                            </h5>
+                            {msg.contradictions.map((c, i) => (
+                              <div key={i} className="text-sm text-red-200 py-1">{c.summary}</div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Clarification questions */}
+                    {msg.clarifications && msg.clarifications.length > 0 && (
+                      <div className="space-y-3 mt-3">
+                        {msg.clarifications.map((q, i) => (
+                          <div key={i} className="p-3 bg-gray-700/50 rounded-lg">
+                            <p className="text-sm mb-2 text-gray-200">{q.question}</p>
+                            <div className="flex flex-wrap gap-2">
+                              {q.options && q.options.length > 0 ? (
+                                q.options.map((opt) => (
+                                  <button
+                                    key={opt}
+                                    onClick={() => handleClarificationAnswer(q.question, opt)}
+                                    className={`px-3 py-1 rounded text-xs transition-colors ${
+                                      pendingClarifications[q.question] === opt
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-600 hover:bg-gray-500 text-gray-200'
+                                    }`}
+                                  >
+                                    {opt}
+                                  </button>
+                                ))
+                              ) : (
+                                <input
+                                  type="text"
+                                  placeholder="Type your answer..."
+                                  className="flex-1 px-3 py-1 bg-gray-600 rounded text-xs text-white placeholder-gray-400"
+                                  onChange={(e) => handleClarificationAnswer(q.question, e.target.value)}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {awaitingClarification && (
+                          <button
+                            onClick={submitClarifications}
+                            disabled={Object.keys(pendingClarifications).length === 0}
+                            className="w-full py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors mt-2"
+                          >
+                            Continue Research →
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {msg.role === 'user' && (
+                    <div className="w-8 h-8 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
+                      U
                     </div>
                   )}
                 </div>
-                {msg.role === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
-                    U
-                  </div>
-                )}
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
 
           {/* Input Area */}
