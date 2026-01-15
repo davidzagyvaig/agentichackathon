@@ -17,7 +17,34 @@ from .schemas import (
     DeepResearchRequest,
 )
 
+# Knowledge Graph schemas (PRD implementation)
+from .kg_schemas import (
+    ClaimNode,
+    ClaimEdge,
+    SourcePaperMetadata,
+    ExternalSourceMetadata,
+    ExtractionMetadata,
+    BuildRun,
+    BuildRunConfig,
+    BuildRunProgress,
+    ProvenanceChain,
+    ProvenanceResult,
+    ClaimSearchFilters,
+    ClaimSearchRequest,
+    ClaimSearchResult,
+    ClaimSearchResponse,
+    GraphStatistics,
+    GraphBuildRequest,
+    BuildStatusResponse,
+    ClaimDetailResponse,
+    SupportResponse,
+    RefreshResponse,
+    generate_claim_id,
+    generate_edge_id,
+)
+
 __all__ = [
+    # Legacy schemas
     "Paper",
     "PaperSearchResult",
     "Claim",
@@ -34,4 +61,27 @@ __all__ = [
     "AnalyzeRequest",
     "AnalyzeResponse",
     "DeepResearchRequest",
+    # Knowledge Graph schemas
+    "ClaimNode",
+    "ClaimEdge",
+    "SourcePaperMetadata",
+    "ExternalSourceMetadata",
+    "ExtractionMetadata",
+    "BuildRun",
+    "BuildRunConfig",
+    "BuildRunProgress",
+    "ProvenanceChain",
+    "ProvenanceResult",
+    "ClaimSearchFilters",
+    "ClaimSearchRequest",
+    "ClaimSearchResult",
+    "ClaimSearchResponse",
+    "GraphStatistics",
+    "GraphBuildRequest",
+    "BuildStatusResponse",
+    "ClaimDetailResponse",
+    "SupportResponse",
+    "RefreshResponse",
+    "generate_claim_id",
+    "generate_edge_id",
 ]

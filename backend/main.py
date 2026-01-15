@@ -49,8 +49,34 @@ from agents.recursive_agent import RecursiveResearcher
 
 from database import Database
 
+# Knowledge Graph imports
+from models.kg_schemas import (
+    GraphBuildRequest,
+    BuildStatusResponse,
+    ClaimSearchRequest,
+    ClaimDetailResponse,
+    SupportResponse,
+    RefreshResponse,
+    GraphStatistics,
+    BuildRunProgress,
+)
+from graph.graph_cache import get_graph_cache, init_graph_cache
+from graph.graph_builder import GraphBuilder
+from graph.provenance import ProvenanceTracer
+from tools import (
+    search_claims,
+    get_claim_support,
+    trace_provenance,
+    get_related_claims,
+    find_contradictions,
+    get_graph_statistics,
+)
+
 # Initialize database
 db = Database()
+
+# Global for tracking active builds
+_active_builds: dict = {}
 
 
 @asynccontextmanager
@@ -58,6 +84,19 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     print("🚀 ClaimGraph Backend starting...")
     print(f"   OpenAI Model: {os.getenv('OPENAI_MODEL', 'gpt-4o')}")
+    
+    # Initialize Knowledge Graph cache
+    try:
+        from database import supabase
+        if supabase:
+            graph_cache = init_graph_cache(supabase)
+            nodes, edges = await graph_cache.load_from_db()
+            print(f"   📊 Loaded Knowledge Graph: {nodes} claims, {edges} edges")
+        else:
+            print("   ⚠️ Supabase not configured, Knowledge Graph cache not loaded")
+    except Exception as e:
+        print(f"   ⚠️ Could not load Knowledge Graph cache: {e}")
+    
     yield
     print("👋 ClaimGraph Backend shutting down...")
 
@@ -600,6 +639,286 @@ async def get_mock_graph():
     """
     graph_data = load_mock_graph()
     return graph_data
+
+
+# ============ Knowledge Graph Building (PRD Implementation) ============
+
+@app.post("/api/kg/build")
+async def api_start_graph_build(request: GraphBuildRequest):
+    """
+    Start a new knowledge graph building pipeline.
+    
+    This initiates the three-phase build process:
+    1. Seed Phase: Process anchor papers sequentially
+    2. Expand Phase: Parallel workers process citation queue
+    3. Analyze Phase: Compute depths, detect cycles, generate stats
+    
+    NOTE: This starts a background task. Check /api/kg/build/{build_id} for status.
+    """
+    from database import supabase
+    
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database not configured")
+    
+    try:
+        graph_cache = get_graph_cache()
+        
+        builder = GraphBuilder(
+            graph_cache=graph_cache,
+            supabase_client=supabase,
+        )
+        
+        import asyncio
+        
+        async def run_build():
+            return await builder.build_graph(
+                anchor_papers=request.anchor_papers,
+                max_depth=request.max_depth,
+                max_claims=request.max_claims,
+                parallel_workers=request.parallel_workers,
+            )
+        
+        task = asyncio.create_task(run_build())
+        build_id = id(task)
+        _active_builds[build_id] = {
+            "task": task,
+            "status": "running",
+            "started_at": time.time(),
+        }
+        
+        return {
+            "build_id": build_id,
+            "status": "started",
+            "message": "Graph build started. Check /api/kg/build/{build_id} for status.",
+            "config": {
+                "max_depth": request.max_depth,
+                "max_claims": request.max_claims,
+                "parallel_workers": request.parallel_workers,
+            }
+        }
+        
+    except Exception as e:
+        print(f"❌ Error starting graph build: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/kg/build/{build_id}")
+async def api_get_build_status(build_id: int):
+    """
+    Check the status of a graph build.
+    """
+    if build_id not in _active_builds:
+        raise HTTPException(status_code=404, detail="Build not found")
+    
+    build_info = _active_builds[build_id]
+    task = build_info["task"]
+    
+    if task.done():
+        try:
+            result = task.result()
+            return {
+                "build_id": build_id,
+                "status": result.status,
+                "progress": {
+                    "papers_processed": result.papers_processed,
+                    "claims_extracted": result.claims_extracted,
+                    "edges_created": result.edges_created,
+                },
+                "duration_seconds": result.duration_seconds,
+                "errors": result.errors,
+            }
+        except Exception as e:
+            return {
+                "build_id": build_id,
+                "status": "failed",
+                "error": str(e),
+            }
+    else:
+        elapsed = time.time() - build_info["started_at"]
+        return {
+            "build_id": build_id,
+            "status": "running",
+            "elapsed_seconds": round(elapsed, 1),
+            "message": "Build in progress...",
+        }
+
+
+@app.post("/api/kg/refresh-cache")
+async def api_refresh_cache():
+    """
+    Reload the NetworkX cache from Supabase.
+    
+    Use this after manually modifying the database or after a build completes.
+    """
+    from database import supabase
+    
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database not configured")
+    
+    try:
+        graph_cache = init_graph_cache(supabase)
+        nodes, edges = await graph_cache.load_from_db()
+        
+        return RefreshResponse(
+            success=True,
+            nodes_loaded=nodes,
+            edges_loaded=edges,
+            message=f"Cache refreshed: {nodes} claims, {edges} edges"
+        )
+    except Exception as e:
+        return RefreshResponse(
+            success=False,
+            nodes_loaded=0,
+            edges_loaded=0,
+            message=f"Failed to refresh cache: {str(e)}"
+        )
+
+
+# ============ Knowledge Graph Query Endpoints ============
+
+@app.post("/api/kg/search")
+async def api_search_claims(request: ClaimSearchRequest):
+    """
+    Search for claims in the knowledge graph.
+    
+    Supports semantic, keyword, and hybrid search modes.
+    """
+    from database import supabase
+    
+    try:
+        result = await search_claims(
+            query=request.query,
+            search_type=request.search_type,
+            limit=request.limit,
+            filters=request.filters.model_dump() if request.filters else None,
+            supabase_client=supabase,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/kg/claim/{claim_id}")
+async def api_get_claim(claim_id: str):
+    """
+    Get full details for a specific claim.
+    """
+    graph_cache = get_graph_cache()
+    claim = graph_cache.get_claim(claim_id)
+    
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    
+    is_grounded = graph_cache.compute_depth_to_ground_truth(claim_id) is not None
+    
+    return ClaimDetailResponse(
+        claim=claim,
+        supporting_claims=graph_cache.get_supporters(claim_id, depth=1),
+        contradicting_claims=graph_cache.get_contradictions(claim_id),
+        is_grounded=is_grounded,
+    )
+
+
+@app.get("/api/kg/claim/{claim_id}/support")
+async def api_get_claim_support(
+    claim_id: str,
+    relationship_type: str = Query("both", enum=["supports", "contradicts", "both"]),
+    direction: str = Query("incoming", enum=["incoming", "outgoing", "both"]),
+    include_transitive: bool = Query(False),
+    max_depth: int = Query(1, ge=1, le=10),
+):
+    """
+    Get claims that support or contradict a specific claim.
+    """
+    try:
+        result = await get_claim_support(
+            claim_id=claim_id,
+            relationship_type=relationship_type,
+            direction=direction,
+            include_transitive=include_transitive,
+            max_depth=max_depth,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/kg/claim/{claim_id}/provenance")
+async def api_get_provenance(
+    claim_id: str,
+    max_depth: int = Query(10, ge=1, le=20),
+):
+    """
+    Trace a claim back to its foundational ground truths.
+    
+    Returns provenance chains, cycles detected, and ungrounded foundations.
+    """
+    try:
+        result = await trace_provenance(
+            claim_id=claim_id,
+            max_depth=max_depth,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/kg/claim/{claim_id}/related")
+async def api_get_related_claims(
+    claim_id: str,
+    relation_type: str = Query("same_paper", enum=["same_paper", "same_author", "similar_topic", "citing_same"]),
+    limit: int = Query(10, ge=1, le=50),
+):
+    """
+    Get claims related by metadata (same paper, author, topic).
+    """
+    try:
+        result = await get_related_claims(
+            claim_id=claim_id,
+            relation_type=relation_type,
+            limit=limit,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/kg/contradictions")
+async def api_find_contradictions(
+    claim_id: Optional[str] = Query(None),
+    topic_query: Optional[str] = Query(None),
+    min_weight: float = Query(0.5, ge=0, le=1),
+):
+    """
+    Find contradictions in the knowledge graph.
+    
+    Either provide a specific claim_id to find its contradictions,
+    or provide a topic_query to find all contradictions within a topic.
+    """
+    from database import supabase
+    
+    try:
+        result = await find_contradictions(
+            claim_id=claim_id,
+            topic_query=topic_query,
+            min_weight=min_weight,
+            supabase_client=supabase,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/kg/stats")
+async def api_get_graph_stats():
+    """
+    Get overview statistics about the knowledge graph.
+    """
+    try:
+        result = await get_graph_statistics()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============ Run Server ============
