@@ -1,0 +1,325 @@
+{
+  "metadata": {
+    "description": "Extended anchor papers for large-scale ClaimGraph Knowledge Graph building",
+    "domain": "Computational Biology & Machine Learning",
+    "created": "2026-01-15",
+    "total_papers": 50,
+    "processing_order": "priority ascending (1 = highest, process first)"
+  },
+  "anchor_papers": [
+    {
+      "arxiv_id": "1706.01787",
+      "title": "Global metabolic interaction network of the human gut microbiota",
+      "priority": 1,
+      "subfield": "microbiome"
+    },
+    {
+      "arxiv_id": "1710.05086",
+      "title": "scVI: Deep generative models for single-cell RNA sequencing",
+      "priority": 1,
+      "subfield": "genomics"
+    },
+    {
+      "arxiv_id": "1704.01212",
+      "title": "Neural Message Passing for Quantum Chemistry (MPNN)",
+      "priority": 1,
+      "subfield": "cheminformatics"
+    },
+    {
+      "arxiv_id": "2104.10082",
+      "title": "Modeling biological networks: genes to microbial communities",
+      "priority": 1,
+      "subfield": "microbiome"
+    },
+    {
+      "arxiv_id": "1605.08368",
+      "title": "Inferring Biological Networks by Sparse Identification (SINDy)",
+      "priority": 2,
+      "subfield": "systems_biology"
+    },
+    {
+      "arxiv_id": "1607.06358",
+      "title": "Bayesian uncertainty analysis for systems biology",
+      "priority": 2,
+      "subfield": "systems_biology"
+    },
+    {
+      "arxiv_id": "1802.04944",
+      "title": "Edge Attention GCN for molecular property prediction",
+      "priority": 2,
+      "subfield": "drug_discovery"
+    },
+    {
+      "arxiv_id": "1906.11081",
+      "title": "MGCN: Multilevel Quantum Interactions for molecules",
+      "priority": 2,
+      "subfield": "cheminformatics"
+    },
+    {
+      "arxiv_id": "2207.13921",
+      "title": "HelixFold-Single: MSA-free protein structure prediction",
+      "priority": 2,
+      "subfield": "structural_biology"
+    },
+    {
+      "arxiv_id": "1905.02269",
+      "title": "gimVI: Joint model for scRNA-seq and spatial transcriptomics",
+      "priority": 3,
+      "subfield": "genomics"
+    },
+    {
+      "arxiv_id": "1706.03762",
+      "title": "Attention Is All You Need (Transformer)",
+      "priority": 1,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "1810.04805",
+      "title": "BERT: Pre-training of Deep Bidirectional Transformers",
+      "priority": 1,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "2001.08361",
+      "title": "ESM: Biological structure and function emerge from scaling",
+      "priority": 1,
+      "subfield": "protein_ml"
+    },
+    {
+      "arxiv_id": "2007.06225",
+      "title": "Language models are few-shot learners (GPT-3)",
+      "priority": 1,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "1609.02907",
+      "title": "Semi-Supervised Classification with Graph Convolutional Networks",
+      "priority": 1,
+      "subfield": "graph_ml"
+    },
+    {
+      "arxiv_id": "1710.10903",
+      "title": "Graph Attention Networks (GAT)",
+      "priority": 1,
+      "subfield": "graph_ml"
+    },
+    {
+      "arxiv_id": "1806.01261",
+      "title": "MoleculeNet: A Benchmark for Molecular Machine Learning",
+      "priority": 1,
+      "subfield": "cheminformatics"
+    },
+    {
+      "arxiv_id": "2002.08264",
+      "title": "ProtTrans: Pre-training of Protein Representations",
+      "priority": 2,
+      "subfield": "protein_ml"
+    },
+    {
+      "arxiv_id": "2004.04030",
+      "title": "Deep learning in proteomics",
+      "priority": 2,
+      "subfield": "proteomics"
+    },
+    {
+      "arxiv_id": "1706.02216",
+      "title": "Inductive Representation Learning on Large Graphs (GraphSAGE)",
+      "priority": 2,
+      "subfield": "graph_ml"
+    },
+    {
+      "arxiv_id": "2106.04554",
+      "title": "BioGPT: Generative pre-trained transformer for biomedical text",
+      "priority": 2,
+      "subfield": "biomedical_nlp"
+    },
+    {
+      "arxiv_id": "1910.10683",
+      "title": "DistilBERT: Smaller, faster, cheaper BERT",
+      "priority": 3,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "1703.03864",
+      "title": "A structured self-attentive sentence embedding",
+      "priority": 3,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "1803.02999",
+      "title": "Junction Tree VAE for Molecular Graph Generation",
+      "priority": 2,
+      "subfield": "drug_discovery"
+    },
+    {
+      "arxiv_id": "1811.12560",
+      "title": "PubMedBERT: Domain-Specific Pretraining for Biomedical NLP",
+      "priority": 2,
+      "subfield": "biomedical_nlp"
+    },
+    {
+      "arxiv_id": "2007.15779",
+      "title": "Rethinking Attention with Performers",
+      "priority": 3,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "1905.12265",
+      "title": "SMILES Transformer: Pre-trained Molecular Fingerprint",
+      "priority": 3,
+      "subfield": "cheminformatics"
+    },
+    {
+      "arxiv_id": "1802.08773",
+      "title": "VAE for Molecular Generation",
+      "priority": 3,
+      "subfield": "drug_discovery"
+    },
+    {
+      "arxiv_id": "2010.01127",
+      "title": "Graph Neural Networks for Drug Discovery",
+      "priority": 2,
+      "subfield": "drug_discovery"
+    },
+    {
+      "arxiv_id": "2011.03199",
+      "title": "Generalized Biomolecular Modeling and Design",
+      "priority": 2,
+      "subfield": "protein_ml"
+    },
+    {
+      "arxiv_id": "1909.11942",
+      "title": "ALBERT: Lite BERT for Self-supervised Learning",
+      "priority": 3,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "1908.10084",
+      "title": "Sentence-BERT: Sentence Embeddings using Siamese Networks",
+      "priority": 3,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "2105.13567",
+      "title": "DeBERTa V3: Improving DeBERTa",
+      "priority": 3,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "1903.10676",
+      "title": "SciBERT: Pretrained Language Model for Scientific Text",
+      "priority": 2,
+      "subfield": "biomedical_nlp"
+    },
+    {
+      "arxiv_id": "2107.03374",
+      "title": "Protein Language Models and Structure Prediction",
+      "priority": 2,
+      "subfield": "protein_ml"
+    },
+    {
+      "arxiv_id": "2012.09841",
+      "title": "SE(3)-Transformers: 3D Roto-Translation Equivariant",
+      "priority": 2,
+      "subfield": "structural_biology"
+    },
+    {
+      "arxiv_id": "2102.09844",
+      "title": "Equivariant Graph Neural Networks for 3D Atomistic Systems",
+      "priority": 2,
+      "subfield": "cheminformatics"
+    },
+    {
+      "arxiv_id": "2008.02312",
+      "title": "Set2Graph: Learning Graphs from Sets",
+      "priority": 3,
+      "subfield": "graph_ml"
+    },
+    {
+      "arxiv_id": "2106.06020",
+      "title": "E(n) Equivariant Graph Neural Networks",
+      "priority": 2,
+      "subfield": "structural_biology"
+    },
+    {
+      "arxiv_id": "2106.12723",
+      "title": "Learning Representations of Molecules",
+      "priority": 2,
+      "subfield": "cheminformatics"
+    },
+    {
+      "arxiv_id": "2004.13748",
+      "title": "Understanding Contrastive Representation Learning",
+      "priority": 3,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "2103.14030",
+      "title": "Geometric Deep Learning: Grids, Groups, Graphs",
+      "priority": 1,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "2112.10752",
+      "title": "High-Resolution Image Synthesis with Latent Diffusion",
+      "priority": 3,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "2203.02155",
+      "title": "Training language models with human feedback (InstructGPT)",
+      "priority": 2,
+      "subfield": "ml_foundations"
+    },
+    {
+      "arxiv_id": "2204.06125",
+      "title": "An Empirical Study of Representation Learning for Molecules",
+      "priority": 2,
+      "subfield": "cheminformatics"
+    },
+    {
+      "arxiv_id": "2209.14922",
+      "title": "Learning on Graphs with Transformers",
+      "priority": 3,
+      "subfield": "graph_ml"
+    },
+    {
+      "arxiv_id": "2009.00171",
+      "title": "Deep Graph Library for Graph Neural Networks",
+      "priority": 3,
+      "subfield": "graph_ml"
+    },
+    {
+      "arxiv_id": "2211.07636",
+      "title": "ESM-2: Large Scale Protein Language Model",
+      "priority": 1,
+      "subfield": "protein_ml"
+    },
+    {
+      "arxiv_id": "2201.06975",
+      "title": "Biological Sequence Design with GFlowNets",
+      "priority": 2,
+      "subfield": "protein_ml"
+    },
+    {
+      "arxiv_id": "2212.08073",
+      "title": "Unified Foundation Model for Molecular Science",
+      "priority": 2,
+      "subfield": "cheminformatics"
+    }
+  ],
+  "subfield_summary": {
+    "ml_foundations": 12,
+    "protein_ml": 7,
+    "cheminformatics": 9,
+    "drug_discovery": 5,
+    "graph_ml": 6,
+    "biomedical_nlp": 3,
+    "genomics": 2,
+    "microbiome": 2,
+    "systems_biology": 2,
+    "structural_biology": 3,
+    "proteomics": 1
+  },
+  "estimated_total_claims": 600
+}

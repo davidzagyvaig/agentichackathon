@@ -154,15 +154,15 @@ class ArxivClient:
             print(f"XML parse error: {e}")
             return None
     
-    async def fetch_paper_text(self, arxiv_id: str) -> Optional[str]:
+    async def fetch_paper_pdf(self, arxiv_id: str) -> Optional[bytes]:
         """
-        Fetch and extract text from arXiv paper PDF.
+        Fetch raw PDF bytes from arXiv.
         
         Args:
             arxiv_id: The arXiv paper ID
             
         Returns:
-            Extracted text content or None if extraction fails.
+            Raw PDF bytes or None if download fails.
         """
         await self._rate_limit()
         
@@ -173,20 +173,35 @@ class ArxivClient:
             async with aiohttp.ClientSession() as session:
                 async with session.get(pdf_url, timeout=aiohttp.ClientTimeout(total=120)) as response:
                     if response.status != 200:
-                        print(f"Failed to download PDF: status {response.status}")
+                        print(f"      Failed to download PDF: status {response.status}")
                         return None
                     
                     pdf_bytes = await response.read()
-            
-            text = await self._extract_text_from_pdf(pdf_bytes)
-            return text
+                    return pdf_bytes
             
         except asyncio.TimeoutError:
-            print(f"Timeout downloading PDF for {arxiv_id}")
+            print(f"      Timeout downloading PDF for {arxiv_id}")
             return None
         except Exception as e:
-            print(f"Error fetching paper text: {e}")
+            print(f"      Error fetching PDF: {e}")
             return None
+    
+    async def fetch_paper_text(self, arxiv_id: str) -> Optional[str]:
+        """
+        Fetch and extract text from arXiv paper PDF.
+        
+        Args:
+            arxiv_id: The arXiv paper ID
+            
+        Returns:
+            Extracted text content or None if extraction fails.
+        """
+        pdf_bytes = await self.fetch_paper_pdf(arxiv_id)
+        if not pdf_bytes:
+            return None
+        
+        text = await self._extract_text_from_pdf(pdf_bytes)
+        return text
     
     async def _extract_text_from_pdf(self, pdf_bytes: bytes) -> Optional[str]:
         """

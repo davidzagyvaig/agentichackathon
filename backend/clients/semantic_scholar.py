@@ -262,6 +262,9 @@ class SemanticScholarClient:
                     headers=self._get_headers(),
                     timeout=aiohttp.ClientTimeout(total=60)
                 ) as response:
+                    if response.status == 404:
+                        # Paper not in Semantic Scholar's index - this is common
+                        return []
                     if response.status != 200:
                         print(f"Error fetching references: status {response.status}")
                         return []

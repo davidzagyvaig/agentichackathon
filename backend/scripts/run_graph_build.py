@@ -74,13 +74,14 @@ def check_environment():
     return True
 
 
-def load_anchor_papers():
+def load_anchor_papers(extended: bool = False):
     """Load anchor papers from JSON file."""
     import json
     
+    filename = "anchor_papers_extended.json" if extended else "anchor_papers.json"
     anchor_path = os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
-        "data", "anchor_papers.json"
+        "data", filename
     )
     
     try:
@@ -90,11 +91,41 @@ def load_anchor_papers():
             papers.sort(key=lambda x: x.get("priority", 99))
             return papers
     except FileNotFoundError:
-        print(f"❌ anchor_papers.json not found at {anchor_path}")
+        print(f"❌ {filename} not found at {anchor_path}")
+        if extended:
+            print("   Falling back to anchor_papers.json...")
+            return load_anchor_papers(extended=False)
         return []
     except Exception as e:
         print(f"❌ Error loading anchor papers: {e}")
         return []
+
+
+async def search_for_papers(query: str, limit: int = 20):
+    """Dynamically search for papers to seed the graph."""
+    from clients.arxiv_client import ArxivClient
+    
+    print(f"🔍 Searching arXiv for: {query}")
+    client = ArxivClient()
+    
+    results = await client.search_papers(
+        query=query,
+        max_results=limit,
+        category="q-bio",  # Quantitative Biology
+        sort_by="relevance"
+    )
+    
+    papers = []
+    for i, r in enumerate(results):
+        papers.append({
+            "arxiv_id": r["arxiv_id"],
+            "title": r.get("title", "")[:60],
+            "priority": 1 if i < 5 else 2 if i < 15 else 3,
+            "subfield": "search_result"
+        })
+    
+    print(f"   Found {len(papers)} papers")
+    return papers
 
 
 def show_anchor_papers(papers: list, dry_run: bool = False):
@@ -246,6 +277,23 @@ def main():
         help="Comma-separated arXiv IDs to process (overrides anchor_papers.json)"
     )
     parser.add_argument(
+        "--extended", "-e",
+        action="store_true",
+        help="Use extended anchor papers list (50 papers instead of 12)"
+    )
+    parser.add_argument(
+        "--search", "-s",
+        type=str,
+        default=None,
+        help="Search query to find papers dynamically (e.g., 'protein folding')"
+    )
+    parser.add_argument(
+        "--search-limit",
+        type=int,
+        default=20,
+        help="Max papers to find when using --search (default: 20)"
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Show what would be processed without running"
@@ -268,8 +316,12 @@ def main():
     if args.papers:
         paper_ids = [p.strip() for p in args.papers.split(",")]
         anchor_papers_data = [{"arxiv_id": pid, "title": f"Paper {pid}", "priority": 1} for pid in paper_ids]
+    elif args.search:
+        anchor_papers_data = asyncio.run(search_for_papers(args.search, args.search_limit))
     else:
-        anchor_papers_data = load_anchor_papers()
+        anchor_papers_data = load_anchor_papers(extended=args.extended)
+        if args.extended:
+            print(f"📚 Using EXTENDED paper list (50 papers)\n")
     
     if not anchor_papers_data:
         print("❌ No anchor papers to process")

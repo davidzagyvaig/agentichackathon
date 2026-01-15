@@ -12,7 +12,6 @@ Implements PRD Section 4: Graph Building Pipeline.
 import asyncio
 import json
 import os
-import re
 from typing import Optional
 from datetime import datetime
 from dataclasses import dataclass, field
@@ -173,8 +172,8 @@ class GraphBuilder:
         errors = []
         
         try:
-            print(f"📚 Phase 1: Seeding with {len(anchor_papers)} anchor papers...")
-            await self._seed_phase(anchor_papers, max_claims)
+            print(f"📚 Phase 1: Seeding with {len(anchor_papers)} anchor papers (parallel, workers={parallel_workers})...")
+            await self._seed_phase(anchor_papers, max_claims, parallel_workers)
             
             print(f"🔄 Phase 2: Expanding citations (depth={max_depth}, workers={parallel_workers})...")
             await self._expand_phase(max_depth, max_claims, parallel_workers)
@@ -201,38 +200,46 @@ class GraphBuilder:
             duration_seconds=duration,
         )
     
-    async def _seed_phase(self, anchor_papers: list[str], max_claims: int):
+    async def _seed_phase(self, anchor_papers: list[str], max_claims: int, parallel_workers: int):
         """
-        Phase 1: Process anchor papers sequentially.
+        Phase 1: Process anchor papers in parallel.
         """
-        for arxiv_id in anchor_papers:
-            if self._total_claims >= max_claims:
-                print(f"   Reached max claims ({max_claims}), stopping seed phase")
-                break
-            
-            print(f"   Processing anchor: {arxiv_id}")
-            
-            try:
-                claims, edges, citations = await self._process_paper(arxiv_id, depth=0)
+        semaphore = asyncio.Semaphore(parallel_workers)
+        results_lock = asyncio.Lock()
+        
+        async def process_anchor(arxiv_id: str):
+            async with semaphore:
+                if self._total_claims >= max_claims:
+                    return
                 
-                self._total_claims += len(claims)
-                self._total_edges += len(edges)
-                self._processed_papers.add(arxiv_id)
+                print(f"   Processing anchor: {arxiv_id}")
                 
-                for citation in citations:
-                    self._citation_queue.append(CitationQueueItem(
-                        paper_id=citation["id"],
-                        source=citation["source"],
-                        depth=1,
-                        priority=citation.get("priority", 0),
-                        parent_paper_id=arxiv_id,
-                    ))
-                
-                await self._update_build_progress()
-                
-            except Exception as e:
-                print(f"   Error processing {arxiv_id}: {e}")
-                continue
+                try:
+                    claims, edges, citations = await self._process_paper(arxiv_id, depth=0)
+                    
+                    # Update shared state with lock
+                    async with results_lock:
+                        self._total_claims += len(claims)
+                        self._total_edges += len(edges)
+                        self._processed_papers.add(arxiv_id)
+                        
+                        for citation in citations:
+                            self._citation_queue.append(CitationQueueItem(
+                                paper_id=citation["id"],
+                                source=citation["source"],
+                                depth=1,
+                                priority=citation.get("priority", 0),
+                                parent_paper_id=arxiv_id,
+                            ))
+                    
+                except Exception as e:
+                    print(f"   Error processing {arxiv_id}: {e}")
+        
+        # Process all anchor papers in parallel
+        await asyncio.gather(*[process_anchor(arxiv_id) for arxiv_id in anchor_papers])
+        await self._update_build_progress()
+        
+        print(f"   Seed phase complete: {self._total_claims} claims from {len(self._processed_papers)} papers")
     
     async def _expand_phase(
         self,
@@ -318,7 +325,9 @@ class GraphBuilder:
         source: str = "arxiv"
     ) -> tuple[list[ClaimNode], list[ClaimEdge], list[dict]]:
         """
-        Process a single paper: fetch, extract claims, detect edges.
+        Process a single paper: construct PDF URL, perform JOINT extraction (claims + edges in one call).
+        
+        Uses file_url to pass PDF directly to OpenAI API (no download needed).
         
         Returns:
             Tuple of (claims, edges, citations_to_expand).
@@ -328,21 +337,24 @@ class GraphBuilder:
             if not metadata:
                 return [], [], []
             
-            paper_text = await self.arxiv_client.fetch_paper_text(paper_id)
+            # Construct PDF URL directly (no download needed)
+            pdf_url = f"https://arxiv.org/pdf/{paper_id}.pdf"
             
-            if paper_text:
-                claims, edges = await self.claim_extractor.extract_and_link_claims(
-                    paper_text,
-                    metadata,
-                    max_claims=15
-                )
-            else:
+            print(f"      📄 Joint extraction from PDF URL: {pdf_url}")
+            # SINGLE API CALL with file_url: extracts, classifies, and detects edges
+            claims, edges = await self.claim_extractor.extract_claims_from_pdf(
+                pdf_url,
+                metadata,
+                max_claims=20
+            )
+            
+            # Fallback to abstract if PDF extraction returned nothing
+            if not claims:
                 from graph.kg_claim_extractor import extract_claims_from_abstract
                 abstract = metadata.get("abstract", "")
                 if abstract:
+                    print(f"      📝 PDF extraction failed, using abstract only")
                     claims = await extract_claims_from_abstract(abstract, metadata)
-                else:
-                    claims = []
                 edges = []
         else:
             metadata = await self.semantic_scholar_client.get_paper_by_arxiv_id(paper_id)
