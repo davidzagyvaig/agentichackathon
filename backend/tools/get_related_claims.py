@@ -7,6 +7,7 @@ Implements PRD Section 9.5.
 
 from typing import Literal, Optional
 from pydantic import BaseModel, Field
+from langchain.tools import tool
 
 from graph.graph_cache import get_graph_cache
 
@@ -27,25 +28,28 @@ class GetRelatedClaimsOutput(BaseModel):
     related_claims: list[dict]
 
 
+@tool
 async def get_related_claims(
     claim_id: str,
     relation_type: Literal["same_paper", "same_author", "similar_topic", "citing_same"] = "same_paper",
     limit: int = 10,
 ) -> dict:
-    """
-    Get claims related by metadata.
+    """Get claims related by metadata (same paper, same author, similar topic).
+    
+    Use this to find contextually related claims that share metadata relationships.
+    Helps discover claims from the same paper, by the same authors, or on similar topics.
     
     Args:
         claim_id: ID of the source claim
-        relation_type: Type of relationship to find:
-            - same_paper: Claims from the same source paper
+        relation_type: Type of relationship:
+            - same_paper: Claims from the same source paper (default)
             - same_author: Claims from papers by same authors
-            - similar_topic: Claims with similar embeddings
-            - citing_same: Claims that cite the same papers
-        limit: Maximum number of related claims to return
+            - similar_topic: Claims with similar content (keyword-based)
+            - citing_same: Claims that share graph connections
+        limit: Maximum results (default: 10, max: 50)
         
     Returns:
-        Dictionary with source claim and related claims.
+        Dictionary with source_claim and related_claims list (each with relation and relevance_score).
     """
     graph_cache = get_graph_cache()
     

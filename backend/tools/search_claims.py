@@ -7,10 +7,12 @@ Implements PRD Section 9.2.
 
 from typing import Optional, Literal
 from pydantic import BaseModel, Field
+from langchain.tools import tool
 
 from graph.graph_cache import get_graph_cache
 from clients.embeddings import EmbeddingsClient
 from models.kg_schemas import ClaimSearchFilters, ClaimSearchResult
+from database import supabase
 
 
 class SearchClaimsInput(BaseModel):
@@ -34,38 +36,25 @@ class SearchClaimsOutput(BaseModel):
     search_type: str
 
 
-async def search_claims(
+async def _search_claims_impl(
     query: str,
     search_type: Literal["semantic", "keyword", "hybrid"] = "hybrid",
     limit: int = 10,
     filters: Optional[dict] = None,
-    supabase_client=None,
 ) -> dict:
-    """
-    Search for claims in the knowledge graph.
-    
-    Args:
-        query: Natural language search query
-        search_type: "semantic", "keyword", or "hybrid"
-        limit: Maximum number of results
-        filters: Optional filters (type, min_confidence, etc.)
-        supabase_client: Supabase client for database queries
-        
-    Returns:
-        Dictionary with claims and metadata.
-    """
+    """Internal implementation of search_claims (used by both tool and other functions)."""
     graph_cache = get_graph_cache()
     filters = filters or {}
     
     results = []
     
-    if search_type == "semantic" and supabase_client:
-        results = await _semantic_search(query, limit, filters, supabase_client)
+    if search_type == "semantic" and supabase:
+        results = await _semantic_search(query, limit, filters, supabase)
     elif search_type == "keyword":
         results = _keyword_search(query, limit, filters, graph_cache)
     else:
-        if supabase_client:
-            semantic_results = await _semantic_search(query, limit * 2, filters, supabase_client)
+        if supabase:
+            semantic_results = await _semantic_search(query, limit * 2, filters, supabase)
             keyword_results = _keyword_search(query, limit * 2, filters, graph_cache)
             results = _hybrid_rerank(semantic_results, keyword_results, limit)
         else:
@@ -76,6 +65,33 @@ async def search_claims(
         "total_results": len(results),
         "search_type": search_type,
     }
+
+
+@tool
+async def search_claims(
+    query: str,
+    search_type: Literal["semantic", "keyword", "hybrid"] = "hybrid",
+    limit: int = 10,
+    filters: Optional[dict] = None,
+) -> dict:
+    """Semantic and keyword search for claims in the knowledge graph.
+    
+    Use this to find claims relevant to a research question. Supports semantic
+    search (vector similarity), keyword search (text matching), or hybrid (combines both).
+    
+    Args:
+        query: Natural language search query
+        search_type: "semantic", "keyword", or "hybrid" (default: hybrid)
+        limit: Maximum number of results (default: 10, max: 100)
+        filters: Optional filters dict with keys:
+            - type: "empirical", "ground_truth", or "unsupported"
+            - min_confidence: float between 0 and 1
+            - has_support: boolean
+        
+    Returns:
+        Dictionary with claims list, total_results, and search_type.
+    """
+    return await _search_claims_impl(query, search_type, limit, filters)
 
 
 async def _semantic_search(

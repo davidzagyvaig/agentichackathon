@@ -1,24 +1,21 @@
 """
 Deep Research Agent
-Uses o3-deep-research via the Responses API to conduct comprehensive research
+Uses LangChain agent with graph traversal tools to conduct comprehensive research
 over a scientific knowledge graph.
 """
 
 import os
 import json
 import asyncio
+import time
 from typing import Optional
-from openai import AsyncOpenAI
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from langchain.messages import HumanMessage
+
+from agents.kg_research_agent import create_kg_research_agent
 
 load_dotenv()
-
-client = AsyncOpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    timeout=3600.0
-)
-RESEARCH_MODEL = "o3-deep-research"
 
 
 class ResearchCitation(BaseModel):
@@ -105,63 +102,64 @@ Report uncertainty honestly. Cite everything.
 
 async def execute_research(
     enriched_prompt: str,
-    graph_context: str,
+    graph_context: str = "",
     max_tool_calls: int = 50
 ) -> DeepResearchResult:
     """
-    Execute deep research using o3-deep-research model.
+    Execute deep research using LangChain agent with graph traversal tools.
     
     Args:
         enriched_prompt: The enriched research prompt from the planner
-        graph_context: Formatted knowledge graph context
+        graph_context: Not used (kept for API compatibility) - agent uses tools instead
         max_tool_calls: Maximum number of tool calls (controls cost/latency)
         
     Returns:
         DeepResearchResult with the research report and extracted information
     """
-    import time
     start_time = time.time()
     
-    full_input = f"""
-{enriched_prompt}
-
-{graph_context}
-
-Please conduct thorough research on the above question using the provided knowledge graph data.
-Ground all findings in the graph nodes and edges. Cite using [node_id] format.
-"""
-    
     try:
-        response = await client.responses.create(
-            model=RESEARCH_MODEL,
-            input=full_input,
-            instructions=DEEP_RESEARCH_INSTRUCTIONS,
-            background=True,
-            reasoning={"summary": "auto"},
-            max_tool_calls=max_tool_calls,
-        )
+        agent = create_kg_research_agent()
         
-        while response.status not in ["completed", "failed", "cancelled"]:
-            await asyncio.sleep(5)
-            response = await client.responses.retrieve(response.id)
+        # Invoke agent with the research prompt
+        # The agent will automatically use tools to traverse the graph
+        result = await agent.ainvoke({
+            "messages": [HumanMessage(content=enriched_prompt)]
+        })
         
-        if response.status != "completed":
-            return DeepResearchResult(
-                report=f"Research failed with status: {response.status}",
-                research_goal=enriched_prompt[:200],
-                status=response.status,
-                execution_time_ms=int((time.time() - start_time) * 1000)
-            )
+        # Extract the final message content as the report
+        # The result is a state dict with messages list
+        messages = result.get("messages", [])
+        report_text = ""
         
-        report_text = response.output_text or ""
+        # Find the last AI message (final answer)
+        for msg in reversed(messages):
+            # Check if it's an AIMessage or has content
+            if hasattr(msg, 'content') and msg.content:
+                content = msg.content
+                # Handle both string and list content
+                if isinstance(content, str):
+                    report_text = content
+                elif isinstance(content, list):
+                    # Extract text from content blocks
+                    text_parts = [item.get('text', '') if isinstance(item, dict) else str(item) 
+                                 for item in content if item]
+                    report_text = '\n'.join(text_parts)
+                else:
+                    report_text = str(content)
+                break
+        
+        if not report_text:
+            # Fallback: concatenate all message contents
+            all_content = []
+            for msg in messages:
+                if hasattr(msg, 'content') and msg.content:
+                    all_content.append(str(msg.content))
+            report_text = '\n\n'.join(all_content) if all_content else "Research completed but no report generated."
         
         citations = extract_citations_from_report(report_text)
         contradictions = extract_contradictions_from_report(report_text)
         confidence = extract_confidence_from_report(report_text)
-        
-        reasoning_summary = ""
-        if hasattr(response, 'reasoning') and response.reasoning:
-            reasoning_summary = getattr(response.reasoning, 'summary', '')
         
         return DeepResearchResult(
             report=report_text,
@@ -169,7 +167,7 @@ Ground all findings in the graph nodes and edges. Cite using [node_id] format.
             citations=citations,
             contradictions=contradictions,
             confidence=confidence,
-            reasoning_summary=reasoning_summary,
+            reasoning_summary="",  # LangChain doesn't provide reasoning summary
             status="completed",
             execution_time_ms=int((time.time() - start_time) * 1000)
         )
@@ -188,63 +186,14 @@ Ground all findings in the graph nodes and edges. Cite using [node_id] format.
 
 async def execute_research_sync(
     enriched_prompt: str,
-    graph_context: str,
+    graph_context: str = "",
     max_tool_calls: int = 30
 ) -> DeepResearchResult:
     """
-    Execute deep research synchronously (no background mode).
-    Use this for faster responses when background mode isn't needed.
+    Execute deep research synchronously.
+    Alias for execute_research (LangChain agent is always synchronous).
     """
-    import time
-    start_time = time.time()
-    
-    full_input = f"""
-{enriched_prompt}
-
-{graph_context}
-
-Please conduct thorough research on the above question using the provided knowledge graph data.
-Ground all findings in the graph nodes and edges. Cite using [node_id] format.
-"""
-    
-    try:
-        response = await client.responses.create(
-            model=RESEARCH_MODEL,
-            input=full_input,
-            instructions=DEEP_RESEARCH_INSTRUCTIONS,
-            reasoning={"summary": "auto"},
-            max_tool_calls=max_tool_calls,
-        )
-        
-        report_text = response.output_text or ""
-        
-        citations = extract_citations_from_report(report_text)
-        contradictions = extract_contradictions_from_report(report_text)
-        confidence = extract_confidence_from_report(report_text)
-        
-        reasoning_summary = ""
-        if hasattr(response, 'reasoning') and response.reasoning:
-            reasoning_summary = getattr(response.reasoning, 'summary', '')
-        
-        return DeepResearchResult(
-            report=report_text,
-            research_goal=enriched_prompt[:200],
-            citations=citations,
-            contradictions=contradictions,
-            confidence=confidence,
-            reasoning_summary=reasoning_summary,
-            status="completed",
-            execution_time_ms=int((time.time() - start_time) * 1000)
-        )
-        
-    except Exception as e:
-        print(f"Error in execute_research_sync: {e}")
-        return DeepResearchResult(
-            report=f"Research error: {str(e)}",
-            research_goal=enriched_prompt[:200],
-            status="error",
-            execution_time_ms=int((time.time() - start_time) * 1000)
-        )
+    return await execute_research(enriched_prompt, graph_context, max_tool_calls)
 
 
 def extract_citations_from_report(report: str) -> list[ResearchCitation]:
@@ -259,7 +208,8 @@ def extract_citations_from_report(report: str) -> list[ResearchCitation]:
     matches = re.findall(pattern, report)
     
     for node_id in matches:
-        if node_id.startswith('paper_') or node_id.startswith('claim_'):
+        # Match claim IDs (format: claim_xxxxx) or any ID in brackets
+        if node_id.startswith('claim_') or node_id.startswith('paper_') or 'claim_' in node_id.lower():
             if node_id not in seen:
                 seen.add(node_id)
                 node_type = "paper" if node_id.startswith('paper_') else "claim"
@@ -338,13 +288,6 @@ if __name__ == "__main__":
     import asyncio
     
     async def test():
-        from planner import create_graph_context_prompt
-        
-        with open("../data/mock_graph.json", "r") as f:
-            graph_data = json.load(f)
-        
-        graph_context = create_graph_context_prompt(graph_data)
-        
         test_prompt = """
         I want to understand the relationship between gut microbiome and depression.
         Specifically:
@@ -354,10 +297,11 @@ if __name__ == "__main__":
         4. What is the overall confidence in this relationship?
         
         Please provide a comprehensive analysis grounded in the knowledge graph data.
+        Use the available tools to search for claims, trace provenance, and find contradictions.
         """
         
-        print("Executing deep research (this may take a while)...")
-        result = await execute_research_sync(test_prompt, graph_context, max_tool_calls=20)
+        print("Executing deep research with LangChain agent (this may take a while)...")
+        result = await execute_research_sync(test_prompt, max_tool_calls=20)
         
         print(f"\nStatus: {result.status}")
         print(f"Execution time: {result.execution_time_ms}ms")

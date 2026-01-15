@@ -7,6 +7,7 @@ Implements PRD Section 9.3.
 
 from typing import Literal, Optional
 from pydantic import BaseModel, Field
+from langchain.tools import tool
 
 from graph.graph_cache import get_graph_cache
 
@@ -36,6 +37,7 @@ class GetClaimSupportOutput(BaseModel):
     contradicting_claims: list[dict]
 
 
+@tool
 async def get_claim_support(
     claim_id: str,
     relationship_type: Literal["supports", "contradicts", "both"] = "both",
@@ -43,19 +45,21 @@ async def get_claim_support(
     include_transitive: bool = False,
     max_depth: int = 1,
 ) -> dict:
-    """
-    Get claims that support or contradict a specific claim.
+    """Get all claims that support or contradict a specific claim.
+    
+    Use this to explore the evidence network around a claim. Can traverse
+    multiple hops to find supporting/contradicting evidence chains.
     
     Args:
         claim_id: ID of the claim to query
-        relationship_type: "supports", "contradicts", or "both"
-        direction: "incoming" (claims that support THIS claim),
-                   "outgoing" (claims this claim supports), or "both"
-        include_transitive: Whether to follow chains beyond direct connections
-        max_depth: Maximum depth for transitive queries
+        relationship_type: "supports", "contradicts", or "both" (default: both)
+        direction: "incoming" (claims supporting THIS), "outgoing" (claims THIS supports),
+                   or "both" (default: incoming)
+        include_transitive: Follow chains beyond direct connections (default: False)
+        max_depth: Maximum traversal depth when include_transitive=True (default: 1, max: 10)
         
     Returns:
-        Dictionary with claim data and supporting/contradicting claims.
+        Dictionary with claim data, supporting_claims list, and contradicting_claims list.
     """
     graph_cache = get_graph_cache()
     

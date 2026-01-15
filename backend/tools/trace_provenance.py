@@ -9,6 +9,7 @@ Implements PRD Section 9.4.
 
 from typing import Optional
 from pydantic import BaseModel, Field
+from langchain.tools import tool
 
 from graph.graph_cache import get_graph_cache
 from graph.provenance import ProvenanceTracer
@@ -30,24 +31,28 @@ class TraceProvenanceOutput(BaseModel):
     provenance_chains: list[dict]
 
 
+@tool
 async def trace_provenance(
     claim_id: str,
     max_depth: int = 10,
 ) -> dict:
-    """
-    Trace a claim back to its foundational ground truths.
+    """Trace a claim back to its foundational ground truths or identify if ungrounded.
+    
+    Use this to assess the epistemic foundation of a claim. Traces backward through
+    supporting evidence chains to find ground truths, detects cycles (circular reasoning),
+    and identifies ungrounded foundations.
     
     Args:
         claim_id: ID of the claim to trace
-        max_depth: Maximum depth to search for ground truths
+        max_depth: Maximum search depth (default: 10, max: 20)
         
     Returns:
-        Dictionary with provenance analysis including:
-        - is_grounded: Whether the claim has any path to ground truth
+        Dictionary with:
+        - is_grounded: Whether claim has path to ground truth
         - ground_truths_found: List of ground truth claims reached
-        - ungrounded_foundations: Claims at end of chains with no support
-        - cycles_detected: Any circular reasoning detected
-        - provenance_chains: All paths from claim to ground truths
+        - ungrounded_foundations: Claims at chain ends with no support
+        - cycles_detected: List of circular reasoning paths
+        - provenance_chains: All paths from claim to ground truths with confidence scores
     """
     graph_cache = get_graph_cache()
     tracer = ProvenanceTracer(graph_cache)

@@ -8,6 +8,7 @@ Implements PRD Section 9.7.
 from typing import Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
+from langchain.tools import tool
 
 from graph.graph_cache import get_graph_cache
 
@@ -24,20 +25,23 @@ class GetGraphStatisticsOutput(BaseModel):
     last_updated: Optional[str]
 
 
+@tool
 async def get_graph_statistics() -> dict:
-    """
-    Get overview statistics about the knowledge graph.
+    """Get overview statistics about the knowledge graph.
+    
+    Use this to understand the scale and structure of the knowledge graph.
+    Provides counts, type distributions, connectivity metrics, and grounding statistics.
     
     Returns:
-        Dictionary with graph statistics including:
-        - total_claims: Total number of claims in the graph
-        - claims_by_type: Breakdown by empirical/ground_truth/unsupported
+        Dictionary with:
+        - total_claims: Total number of claims
+        - claims_by_type: Dict with empirical, ground_truth, unsupported counts
         - total_edges: Total number of edges
-        - edges_by_type: Breakdown by supports/contradicts
-        - avg_support_depth: Average depth to ground truth
+        - edges_by_type: Dict with supports and contradicts counts
+        - avg_support_depth: Average depth to ground truth for grounded claims
         - grounded_percentage: Percentage of claims with path to ground truth
         - papers_indexed: Number of unique papers
-        - last_updated: Timestamp of last update
+        - last_updated: Timestamp of last cache sync
     """
     graph_cache = get_graph_cache()
     

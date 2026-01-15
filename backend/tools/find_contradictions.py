@@ -9,9 +9,11 @@ Implements PRD Section 9.6.
 
 from typing import Optional
 from pydantic import BaseModel, Field
+from langchain.tools import tool
 
 from graph.graph_cache import get_graph_cache
-from tools.search_claims import search_claims
+from tools.search_claims import _search_claims_impl
+from database import supabase
 
 
 class FindContradictionsInput(BaseModel):
@@ -34,23 +36,27 @@ class FindContradictionsOutput(BaseModel):
     contradictions: list[dict]
 
 
+@tool
 async def find_contradictions(
     claim_id: Optional[str] = None,
     topic_query: Optional[str] = None,
     min_weight: float = 0.5,
-    supabase_client=None,
 ) -> dict:
-    """
-    Find contradicting claims.
+    """Find claims that contradict a given claim or find all contradictions in a topic.
+    
+    Use this to identify conflicting evidence. Can search for contradictions of a specific
+    claim, within a topic area, or across the entire graph.
     
     Args:
-        claim_id: If provided, find claims that contradict this specific claim
-        topic_query: If provided, find all contradictions within the topic
-        min_weight: Minimum edge weight to include (filters weak contradictions)
-        supabase_client: Optional Supabase client for topic search
+        claim_id: If provided, find claims contradicting this specific claim
+        topic_query: If provided, find all contradictions within this topic (searches graph first)
+        min_weight: Minimum contradiction edge weight to include (default: 0.5, range: 0-1)
         
+    Note: Either claim_id OR topic_query should be provided, not both.
+    
     Returns:
-        Dictionary with list of contradiction pairs.
+        Dictionary with contradictions list (each with claim_a, claim_b, edge, resolution_hints)
+        and total_found count.
     """
     graph_cache = get_graph_cache()
     contradictions = []
@@ -66,7 +72,7 @@ async def find_contradictions(
             topic_query,
             min_weight,
             graph_cache,
-            supabase_client
+            supabase
         )
     else:
         contradictions = _find_all_contradictions(min_weight, graph_cache)
@@ -133,11 +139,10 @@ async def _find_topic_contradictions(
     supabase_client
 ) -> list[dict]:
     """Find all contradictions within a topic."""
-    search_result = await search_claims(
+    search_result = await _search_claims_impl(
         query=topic_query,
         search_type="hybrid",
-        limit=50,
-        supabase_client=supabase_client
+        limit=50
     )
     
     topic_claim_ids = {c["id"] for c in search_result.get("claims", [])}
