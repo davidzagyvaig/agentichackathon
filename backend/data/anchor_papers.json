@@ -1,0 +1,170 @@
+{
+  "metadata": {
+    "description": "Anchor papers for ClaimGraph Knowledge Graph seeding",
+    "domain": "Quantitative Biology (q-bio)",
+    "created": "2026-01-15",
+    "total_papers": 12,
+    "processing_order": "priority ascending (1 = highest priority, process first)"
+  },
+  "anchor_papers": [
+    {
+      "arxiv_id": "1706.01787",
+      "title": "Global metabolic interaction network of the human gut microbiota for context-specific community-scale analysis",
+      "authors": ["Sung, J.", "Kim, S.", "Cabatbat, J.J.T.", "et al."],
+      "year": 2017,
+      "venue": "Nature Communications",
+      "priority": 1,
+      "subfield": "microbiome",
+      "url": "https://arxiv.org/abs/1706.01787",
+      "notes": "NJS16 network: ~570 microbial species, 4,400+ metabolic interactions. Foundational for gut microbiome systems biology.",
+      "expected_claims": 15
+    },
+    {
+      "arxiv_id": "1710.05086",
+      "title": "Deep generative models for single-cell RNA sequencing (scVI)",
+      "authors": ["Lopez, R.", "Regier, J.", "Cole, M.B.", "Jordan, M.I.", "Yosef, N."],
+      "year": 2017,
+      "venue": "Nature Methods (2018)",
+      "priority": 1,
+      "subfield": "genomics",
+      "url": "https://arxiv.org/abs/1710.05086",
+      "notes": "Introduced scVI variational autoencoder for scRNA-seq. Widely adopted, handles batch effects, dropout.",
+      "expected_claims": 12
+    },
+    {
+      "arxiv_id": "1704.01212",
+      "title": "Neural Message Passing for Quantum Chemistry",
+      "authors": ["Gilmer, J.", "Schoenholz, S.S.", "Riley, P.F.", "Vinyals, O.", "Dahl, G.E."],
+      "year": 2017,
+      "venue": "ICML 2017",
+      "priority": 1,
+      "subfield": "cheminformatics",
+      "url": "https://arxiv.org/abs/1704.01212",
+      "notes": "Introduced MPNN framework. Foundational for GNNs in molecular property prediction.",
+      "expected_claims": 10
+    },
+    {
+      "arxiv_id": "1605.08368",
+      "title": "Inferring Biological Networks by Sparse Identification of Nonlinear Dynamics",
+      "authors": ["Mangan, N.M.", "Brunton, S.L.", "Proctor, J.L.", "Kutz, J.N."],
+      "year": 2016,
+      "venue": "PLoS Computational Biology",
+      "priority": 2,
+      "subfield": "systems_biology",
+      "url": "https://arxiv.org/abs/1605.08368",
+      "notes": "Implicit-SINDy for data-driven biological network inference. Applied to enzyme kinetics, bacterial regulation.",
+      "expected_claims": 8
+    },
+    {
+      "arxiv_id": "1607.06358",
+      "title": "Bayesian uncertainty analysis for complex systems biology models",
+      "authors": ["Vernon, I.", "Liu, J.", "Goldstein, M.", "et al."],
+      "year": 2016,
+      "venue": "PLOS Computational Biology",
+      "priority": 2,
+      "subfield": "systems_biology",
+      "url": "https://arxiv.org/abs/1607.06358",
+      "notes": "Statistical emulation + history matching for high-dimensional parameter spaces in biology.",
+      "expected_claims": 8
+    },
+    {
+      "arxiv_id": "1802.04944",
+      "title": "Edge Attention-based Multi-Relational Graph Convolutional Networks (EAGCN)",
+      "authors": ["Shang, C.", "Liu, Q.", "Chen, K.S.", "et al."],
+      "year": 2018,
+      "venue": "arXiv preprint",
+      "priority": 2,
+      "subfield": "drug_discovery",
+      "url": "https://arxiv.org/abs/1802.04944",
+      "notes": "GNN with edge attention for molecular property prediction. Multiple relationship types.",
+      "expected_claims": 10
+    },
+    {
+      "arxiv_id": "1906.11081",
+      "title": "Molecular Property Prediction: A Multilevel Quantum Interactions Modeling Perspective (MGCN)",
+      "authors": ["Lu, C.", "Liu, Q.", "Wang, C.", "et al."],
+      "year": 2019,
+      "venue": "AAAI 2019",
+      "priority": 2,
+      "subfield": "cheminformatics",
+      "url": "https://arxiv.org/abs/1906.11081",
+      "notes": "Multilevel GCN capturing quantum-scale interactions. Handles equilibrium and off-equilibrium molecules.",
+      "expected_claims": 10
+    },
+    {
+      "arxiv_id": "2104.10082",
+      "title": "Modeling biological networks: from single gene systems to large microbial communities",
+      "authors": ["Descheemaeker, L."],
+      "year": 2021,
+      "venue": "PhD Thesis / arXiv",
+      "priority": 1,
+      "subfield": "microbiome",
+      "url": "https://arxiv.org/abs/2104.10082",
+      "notes": "Spans gene regulation to gut microbiota population models. Statistical properties of abundance distributions.",
+      "expected_claims": 15
+    },
+    {
+      "arxiv_id": "2207.13921",
+      "title": "HelixFold-Single: MSA-free Protein Structure Prediction by Using Protein Language Models",
+      "authors": ["Fang, X.", "Wang, F.", "Liu, L.", "et al."],
+      "year": 2022,
+      "venue": "arXiv preprint",
+      "priority": 2,
+      "subfield": "structural_biology",
+      "url": "https://arxiv.org/abs/2207.13921",
+      "notes": "Single-sequence protein structure prediction. Combines PLM + AlphaFold2 modules. Faster inference.",
+      "expected_claims": 12
+    },
+    {
+      "arxiv_id": "1905.02269",
+      "title": "A joint model of unpaired data from scRNA-seq and spatial transcriptomics (gimVI)",
+      "authors": ["Lopez, R.", "Nazaret, A.", "Langevin, M.", "et al."],
+      "year": 2019,
+      "venue": "NeurIPS 2019 Workshop",
+      "priority": 3,
+      "subfield": "genomics",
+      "url": "https://arxiv.org/abs/1905.02269",
+      "notes": "Integrates spatial transcriptomics with scRNA-seq. Imputes missing genes in spatial data.",
+      "expected_claims": 8
+    },
+    {
+      "arxiv_id": "2509.07911",
+      "title": "Gut-Brain Axis as a Closed-Loop Molecular Communication Network",
+      "authors": ["Ortlek, B.E.", "Akan, O.B."],
+      "year": 2025,
+      "venue": "arXiv preprint",
+      "priority": 3,
+      "subfield": "gut_brain",
+      "url": "https://arxiv.org/abs/2509.07911",
+      "notes": "Models gut-brain axis with 6 coupled nonlinear DDEs. Information theory analysis of pathological states.",
+      "expected_claims": 10
+    },
+    {
+      "arxiv_id": "2412.19945",
+      "title": "Modeling and Analysis of SCFA-Driven Vagus Nerve Signaling in the Gut-Brain Axis via Molecular Communication",
+      "authors": ["Ortlek, B.E.", "Akan, O.B."],
+      "year": 2024,
+      "venue": "arXiv preprint",
+      "priority": 3,
+      "subfield": "gut_brain",
+      "url": "https://arxiv.org/abs/2412.19945",
+      "notes": "SCFA → vagal afferents → action potentials. Molecular communication framework for gut-brain signaling.",
+      "expected_claims": 8
+    }
+  ],
+  "subfield_summary": {
+    "microbiome": 2,
+    "gut_brain": 2,
+    "genomics": 2,
+    "cheminformatics": 2,
+    "drug_discovery": 1,
+    "systems_biology": 2,
+    "structural_biology": 1
+  },
+  "estimated_total_claims": 126,
+  "processing_notes": {
+    "priority_1": "Process first - foundational papers with high expected yield",
+    "priority_2": "Process second - important but narrower scope",
+    "priority_3": "Process last - recent/specialized, may have fewer citations to expand"
+  }
+}
