@@ -173,8 +173,71 @@ class AnalyzeResponse(BaseModel):
     summary: dict = {}
 
 
+# ============ Deep Research Models ============
+
+class ClarificationQuestion(BaseModel):
+    """A clarification question for the user"""
+    question: str
+    options: list[str] = []
+    required: bool = False
+
+
+class ClarifyRequest(BaseModel):
+    """Request to clarify a research query"""
+    query: str
+
+
+class ClarifyResponse(BaseModel):
+    """Response from clarification step"""
+    needs_clarification: bool
+    questions: list[ClarificationQuestion] = []
+    reasoning: str = ""
+
+
 class DeepResearchRequest(BaseModel):
-    """Request for deep research handoff"""
+    """Request for deep research execution"""
+    query: str
+    clarifications: dict = {}
+    max_tool_calls: int = 50
+    use_background: bool = True
+
+
+class ResearchCitation(BaseModel):
+    """A citation from the research report"""
+    node_id: str
+    node_type: str
+    label: str
+    context: str = ""
+
+
+class ContradictionFound(BaseModel):
+    """A contradiction identified in the research"""
+    paper_a_id: str
+    paper_a_label: str
+    paper_b_id: str
+    paper_b_label: str
+    summary: str
+    edge_id: Optional[str] = None
+
+
+class DeepResearchResponse(BaseModel):
+    """Response from deep research execution"""
+    query: str
+    report: str
+    research_goal: str
+    citations: list[ResearchCitation] = []
+    contradictions: list[ContradictionFound] = []
+    confidence: float = 0.0
+    reasoning_summary: str = ""
+    status: str = "completed"
+    execution_time_ms: int = 0
+    graph: Optional[KnowledgeGraph] = None
+
+
+# ============ Legacy Deep Research Request ============
+
+class LegacyDeepResearchRequest(BaseModel):
+    """Legacy request for deep research handoff (kept for compatibility)"""
     graph: KnowledgeGraph
     user_query: str
     verified_claims: list[Claim]

@@ -29,10 +29,19 @@ from models.schemas import (
     KnowledgeGraph,
     ValidationStatus,
     ClaimValidation,
+    ClarifyRequest,
+    ClarifyResponse,
+    ClarificationQuestion,
+    DeepResearchRequest,
+    DeepResearchResponse,
+    ResearchCitation,
+    ContradictionFound,
 )
 from agents.paper_search import search_papers, get_paper_by_doi
 from agents.claim_extractor import extract_claims_from_paper
 from agents.citation_validator import validate_claim
+from agents.planner import clarify_query, enrich_prompt, create_graph_context_prompt
+from agents.deep_researcher import execute_research, execute_research_sync
 from graph.knowledge_graph import create_knowledge_graph, export_for_react_flow
 
 
@@ -361,9 +370,168 @@ async def validate_single_claim(claim_id: str):
 @app.post("/api/clear")
 async def clear_cache():
     """Clear all cached data. Use for starting fresh."""
-    """Clear all cached data. Use for starting fresh."""
     success = db.clear_all()
     return {"success": success, "message": "Database cleared" if success else "Failed to clear database"}
+
+
+# ============ Deep Research ============
+
+def load_mock_graph() -> dict:
+    """Load the mock knowledge graph from JSON file."""
+    import json
+    graph_path = os.path.join(os.path.dirname(__file__), "data", "mock_graph.json")
+    try:
+        with open(graph_path, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Warning: Mock graph not found at {graph_path}")
+        return {"nodes": [], "edges": [], "metadata": {}}
+
+
+@app.post("/api/deep-research/clarify")
+async def api_clarify_query(request: ClarifyRequest):
+    """
+    Step 1 of deep research: Clarify the user's research query.
+    
+    Uses GPT-4.1 to determine if clarification questions are needed
+    before conducting deep research.
+    """
+    try:
+        print(f"🤔 Clarifying query: {request.query[:50]}...")
+        result = await clarify_query(request.query)
+        
+        return ClarifyResponse(
+            needs_clarification=result.needs_clarification,
+            questions=[
+                ClarificationQuestion(
+                    question=q.question,
+                    options=q.options,
+                    required=q.required
+                )
+                for q in result.questions
+            ],
+            reasoning=result.reasoning
+        )
+    except Exception as e:
+        print(f"❌ Error in clarification: {e}")
+        return ClarifyResponse(
+            needs_clarification=False,
+            reasoning=f"Proceeding without clarification due to error: {str(e)}"
+        )
+
+
+@app.post("/api/deep-research")
+async def api_deep_research(request: DeepResearchRequest):
+    """
+    Execute deep research over the knowledge graph.
+    
+    This is the main deep research endpoint that:
+    1. Loads the mock knowledge graph
+    2. Enriches the user prompt with GPT-4.1
+    3. Executes deep research with o3-deep-research
+    4. Returns a structured report with citations
+    """
+    start_time = time.time()
+    
+    try:
+        # Step 1: Load mock graph
+        print(f"📊 Loading knowledge graph...")
+        graph_data = load_mock_graph()
+        
+        if not graph_data.get("nodes"):
+            raise HTTPException(
+                status_code=500,
+                detail="Knowledge graph not available. Please ensure mock_graph.json exists."
+            )
+        
+        # Create graph summary for enrichment
+        graph_summary = {
+            "total_nodes": len(graph_data.get("nodes", [])),
+            "papers": len([n for n in graph_data.get("nodes", []) if n.get("type") == "paper"]),
+            "claims": len([n for n in graph_data.get("nodes", []) if n.get("type") == "claim"]),
+            "total_edges": len(graph_data.get("edges", [])),
+            "topic": graph_data.get("metadata", {}).get("topic", "Scientific Research")
+        }
+        
+        # Step 2: Enrich the prompt
+        print(f"📝 Enriching research prompt...")
+        enriched = await enrich_prompt(
+            query=request.query,
+            clarifications=request.clarifications,
+            graph_summary=graph_summary
+        )
+        
+        # Step 3: Create graph context
+        graph_context = create_graph_context_prompt(graph_data)
+        
+        # Step 4: Execute deep research
+        print(f"🔬 Executing deep research (this may take a while)...")
+        
+        if request.use_background:
+            result = await execute_research(
+                enriched_prompt=enriched.enriched_prompt,
+                graph_context=graph_context,
+                max_tool_calls=request.max_tool_calls
+            )
+        else:
+            result = await execute_research_sync(
+                enriched_prompt=enriched.enriched_prompt,
+                graph_context=graph_context,
+                max_tool_calls=min(request.max_tool_calls, 30)
+            )
+        
+        elapsed_time = time.time() - start_time
+        print(f"✨ Deep research complete in {elapsed_time:.2f}s")
+        
+        # Build response
+        return DeepResearchResponse(
+            query=request.query,
+            report=result.report,
+            research_goal=enriched.research_goal,
+            citations=[
+                ResearchCitation(
+                    node_id=c.node_id,
+                    node_type=c.node_type,
+                    label=c.label,
+                    context=c.context
+                )
+                for c in result.citations
+            ],
+            contradictions=[
+                ContradictionFound(
+                    paper_a_id=c.paper_a_id,
+                    paper_a_label=c.paper_a_label,
+                    paper_b_id=c.paper_b_id,
+                    paper_b_label=c.paper_b_label,
+                    summary=c.summary,
+                    edge_id=c.edge_id
+                )
+                for c in result.contradictions
+            ],
+            confidence=result.confidence,
+            reasoning_summary=result.reasoning_summary,
+            status=result.status,
+            execution_time_ms=int(elapsed_time * 1000)
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error in deep research: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/deep-research/graph")
+async def get_mock_graph():
+    """
+    Get the mock knowledge graph data.
+    
+    Returns the raw graph data used for deep research.
+    """
+    graph_data = load_mock_graph()
+    return graph_data
 
 
 # ============ Run Server ============
