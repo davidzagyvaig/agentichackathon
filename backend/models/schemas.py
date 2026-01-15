@@ -156,12 +156,24 @@ class SearchRequest(BaseModel):
     max_results: int = 10
 
 
+
+
 class AnalyzeRequest(BaseModel):
     """Request to analyze papers and build graph"""
     query: str
     max_papers: int = 5
     extract_claims: bool = True
     validate_citations: bool = True
+    conversation_id: Optional[str] = None
+
+
+
+class DeepVerifyRequest(BaseModel):
+    """Request for recursive deep verification"""
+    query: str
+    max_depth: int = 1
+    max_papers: int = 5
+
 
 
 class AnalyzeResponse(BaseModel):

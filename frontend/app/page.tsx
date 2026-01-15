@@ -35,10 +35,14 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Initialize welcome message on client side only to avoid hydration mismatch
   useEffect(() => {
+    fetchConversations();
+    // Default welcome message
     setMessages([
       {
         id: "welcome",
@@ -48,6 +52,52 @@ export default function Home() {
       },
     ]);
   }, []);
+
+  const fetchConversations = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/api/conversations");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setConversations(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch conversations", e);
+    }
+  };
+
+  const createNewSession = async () => {
+    setConversationId(null);
+    setMessages([
+      {
+        id: "welcome-" + Date.now(),
+        role: "assistant",
+        content: "Starting a new verification session. What would you like to verify?",
+        timestamp: new Date(),
+      },
+    ]);
+    setNodes([]); // Clear graph
+    setEdges([]);
+    setGraphVisible(false);
+  };
+
+  const loadConversation = async (id: string) => {
+    setConversationId(id);
+    setGraphVisible(false); // Maybe keep it handled by user?
+    try {
+      const res = await fetch(`http://localhost:8000/api/conversations/${id}`);
+      const data = await res.json();
+      // Transform backend messages to frontend format
+      const loadedMessages: Message[] = data.map((msg: any) => ({
+        id: msg.id,
+        role: msg.role,
+        content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
+        timestamp: new Date(msg.created_at)
+      }));
+      setMessages(loadedMessages);
+    } catch (e) {
+      console.error("Failed to load conversation", e);
+    }
+  };
 
   // Graph State
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -62,6 +112,20 @@ export default function Home() {
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
+
+    // Create session if not exists
+    let currentConvId = conversationId;
+    if (!currentConvId) {
+      try {
+        const res = await fetch(`http://localhost:8000/api/conversations?title=${encodeURIComponent(inputValue.substring(0, 30))}`, { method: 'POST' });
+        const newConv = await res.json();
+        currentConvId = newConv.id;
+        setConversationId(currentConvId);
+        fetchConversations(); // Refresh sidebar
+      } catch (e) {
+        console.error("Failed to create conversation", e);
+      }
+    }
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -96,6 +160,7 @@ export default function Home() {
           max_papers: 5,
           extract_claims: true,
           validate_citations: true,
+          conversation_id: currentConvId // Pass ID for persistence
         }),
       });
 
@@ -207,6 +272,7 @@ export default function Home() {
           max_papers: 1, // Focus on this one
           extract_claims: true,
           validate_citations: true,
+          conversation_id: conversationId // Maintain context
         }),
       });
       const data = await response.json();
@@ -238,19 +304,7 @@ export default function Home() {
       <div className="w-[260px] bg-black hidden md:flex flex-col border-r border-gray-800">
         <div className="p-3">
           <button
-            onClick={() => {
-              setGraphVisible(false);
-              setMessages([]);
-              // Reset welcome message
-              setMessages([
-                {
-                  id: "welcome",
-                  role: "assistant",
-                  content: "Hello! I'm ClaimGraph. I don't summarize papers; I **verify** their claims against ground truth. \n\nAsk me about a scientific topic (e.g., 'Do transformer models effectively predict climate tipping points?'), and I'll build a verification graph for you.",
-                  timestamp: new Date(),
-                },
-              ]);
-            }}
+            onClick={createNewSession}
             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-200 bg-gray-900 hover:bg-gray-800 rounded-md transition-colors border border-gray-700"
           >
             <span>+</span> New verification
@@ -259,12 +313,15 @@ export default function Home() {
         <div className="flex-1 overflow-y-auto px-3 py-2">
           <div className="text-xs font-semibold text-gray-500 mb-2 px-2">Recent</div>
           <div className="space-y-1">
-            <button className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-900 rounded-md truncate transition-colors">
-              Transformer models climate...
-            </button>
-            <button className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-900 rounded-md truncate transition-colors">
-              BERT architecture analysis
-            </button>
+            {conversations.map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => loadConversation(conv.id)}
+                className={`w-full text-left px-3 py-2 text-sm rounded-md truncate transition-colors ${conversationId === conv.id ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-900'}`}
+              >
+                {conv.title}
+              </button>
+            ))}
           </div>
         </div>
         <div className="p-4 border-t border-gray-800">

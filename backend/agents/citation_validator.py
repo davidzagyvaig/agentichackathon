@@ -230,38 +230,33 @@ def check_suspicious_patterns(text: str) -> list[str]:
     return issues
 
 
+
 async def validate_claim(
     claim: Claim,
     source_paper: Paper,
     cited_papers: dict[str, Paper] = None
 ) -> ClaimValidation:
     """
-    Run the full 5-check validation pipeline on a claim.
+    Run the validation pipeline on a claim.
     
     Checks:
-    1. Citation existence
+    1. Citation existence & integrity
     2. Retraction status
-    3. Citation relevance
+    3. Content Relevance (The "Hash" Check): Does the cited paper actually say that?
     4. Circular citations
-    5. Bullshit detection (tortured phrases + patterns)
+    5. Tortured phrases (Bullshit detection)
     """
     citation_validations = []
     bullshit_indicators = []
     trust_scores = []
     
-    # Check 5: Bullshit detection on the claim itself
+    # Check 5: Tortured phrases on the claim itself (Immediate Fail Check)
     tortured = check_tortured_phrases(claim.text)
     if tortured:
         bullshit_indicators.extend([f"Tortured phrase: {p}" for p in tortured])
     
     patterns = check_suspicious_patterns(claim.text)
     bullshit_indicators.extend(patterns)
-    
-    # Check the source paper's abstract too
-    if source_paper.abstract:
-        tortured_paper = check_tortured_phrases(source_paper.abstract)
-        if tortured_paper:
-            bullshit_indicators.extend([f"Paper contains: {p}" for p in tortured_paper])
     
     # If claim has citation references, validate each
     for citation_doi in claim.citation_refs:
@@ -274,18 +269,23 @@ async def validate_claim(
         if exists and cited_paper:
             validation.citation_title = cited_paper.title
             
-            # Check 2: Retraction
+            # Check 2: Retraction (Critical Fail)
             validation.is_retracted = await check_retraction_status(cited_paper)
             if validation.is_retracted:
                 bullshit_indicators.append(f"Cites retracted paper: {citation_doi}")
             
-            # Check 3: Relevance
+            # Check 3: Relevance / Consistency (The "Hash" Verification)
+            # We check if the cited paper's abstract actually supports the claim.
             is_relevant, score, notes = await check_citation_relevance(
                 claim.text, cited_paper
             )
             validation.is_relevant = is_relevant
             validation.relevance_score = score
             validation.validation_notes = notes
+            
+            if is_relevant is False:
+                 bullshit_indicators.append(f"Citation mismatch: Cited paper {citation_doi} does not support claim")
+
             
             # Check 4: Circular citation
             if source_paper.doi:
@@ -295,22 +295,23 @@ async def validate_claim(
                 if validation.is_circular:
                     bullshit_indicators.append(f"Circular citation with: {citation_doi}")
             
-            # Calculate trust score for this citation
+            # Calculate trust score for this citation validation
             cite_score = 1.0
             if validation.is_retracted:
-                cite_score *= 0.0
-            if validation.is_circular:
+                cite_score = 0.0
+            elif validation.is_relevant is False:
+                cite_score = 0.1 # Strong penalty for fake citation
+            elif validation.is_circular:
                 cite_score *= 0.5
-            if validation.is_relevant is False:
-                cite_score *= 0.3
-            elif validation.is_relevant is None:
+            
+            if validation.is_relevant is None: # Could not verify content
                 cite_score *= 0.7
             
             trust_scores.append(cite_score)
         else:
-            # Citation doesn't exist
+            # Citation doesn't exist (Hallucination Candidate)
             bullshit_indicators.append(f"Citation not found: {citation_doi}")
-            validation.validation_notes = "Paper not found in databases"
+            validation.validation_notes = "Paper not found in databases - potential hallucination"
             trust_scores.append(0.0)
         
         citation_validations.append(validation)
@@ -318,31 +319,44 @@ async def validate_claim(
     # Calculate overall trust score
     if trust_scores:
         overall_trust = sum(trust_scores) / len(trust_scores)
+    elif claim.citation_refs:
+         # Has citations but none were valid/checked
+         overall_trust = 0.0
     elif bullshit_indicators:
-        overall_trust = 0.3  # Suspicious but no citations to check
+        overall_trust = 0.2  # Suspicious patterns, no citations
     else:
-        overall_trust = 0.7  # No citations and no red flags
+        # No citations, but no obvious red flags. Unverified.
+        overall_trust = 0.5 
     
-    # Reduce trust for each bullshit indicator
-    overall_trust *= (0.9 ** len(bullshit_indicators))
+    # Penalty for bullshit indicators
+    if bullshit_indicators:
+        overall_trust *= (0.8 ** len(bullshit_indicators))
+    
     overall_trust = max(0.0, min(1.0, overall_trust))
     
-    # Determine validation status
-    if overall_trust >= 0.7:
+    # Determine Status
+    if overall_trust >= 0.8:
         status = ValidationStatus.VERIFIED
-    elif overall_trust >= 0.4:
+    elif overall_trust >= 0.5:
         status = ValidationStatus.PENDING
     else:
         status = ValidationStatus.SUSPICIOUS
-    
+        # If it has specific "hard" fail conditions, mark DEBUNKED
+        if any("retracted" in i for i in bullshit_indicators) or \
+           any("Citation not found" in i for i in bullshit_indicators):
+           # Use SUSPICIOUS for now as defined in enum, or map to 'DEBUNKED' if we add it
+           pass
+
     # Generate summary
     summary_parts = []
     if citation_validations:
-        verified = sum(1 for cv in citation_validations if cv.exists and cv.is_relevant)
-        summary_parts.append(f"{verified}/{len(citation_validations)} citations verified")
+        verified_count = sum(1 for cv in citation_validations if cv.exists and cv.is_relevant)
+        summary_parts.append(f"{verified_count}/{len(citation_validations)} citations verified")
+    
     if bullshit_indicators:
-        summary_parts.append(f"{len(bullshit_indicators)} red flags detected")
-    summary = "; ".join(summary_parts) if summary_parts else "No issues detected"
+        summary_parts.append(f"FLAGS: {', '.join(bullshit_indicators[:3])}")
+    
+    summary = "; ".join(summary_parts) if summary_parts else "No specific issues found"
     
     return ClaimValidation(
         claim_id=claim.id,

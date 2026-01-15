@@ -34,6 +34,8 @@ from agents.paper_search import search_papers, get_paper_by_doi
 from agents.claim_extractor import extract_claims_from_paper
 from agents.citation_validator import validate_claim
 from graph.knowledge_graph import create_knowledge_graph, export_for_react_flow
+from models.schemas import DeepVerifyRequest
+from agents.recursive_agent import RecursiveResearcher
 
 
 from database import Database
@@ -135,6 +137,39 @@ async def get_paper(doi: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
+# ============ Conversation Management ============
+
+@app.get("/api/conversations")
+async def get_conversations():
+    """Get recent conversations."""
+    try:
+        conversations = db.get_recent_conversations()
+        return conversations
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/conversations")
+async def create_conversation(title: str = Query("New Session", description="Conversation Title")):
+    """Create a new conversation."""
+    try:
+        conversation = db.create_conversation(title)
+        return conversation
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/conversations/{conversation_id}")
+async def get_conversation_history(conversation_id: str):
+    """Get messages for a conversation."""
+    try:
+        messages = db.get_conversation_history(conversation_id)
+        return messages
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============ Claim Extraction ============
 
 @app.post("/api/extract-claims")
@@ -185,6 +220,10 @@ async def api_analyze(request: AnalyzeRequest):
     all_validations = {}
     
     try:
+        # Step 0: Save User Message (if conversation_id)
+        if request.conversation_id:
+            db.add_message(request.conversation_id, "user", request.query)
+
         # Step 1: Search for papers
         print(f"🔍 Searching for: {request.query}")
         search_result = await search_papers(request.query, request.max_papers)
@@ -258,6 +297,12 @@ async def api_analyze(request: AnalyzeRequest):
         
         print(f"✨ Analysis complete in {elapsed_time:.2f}s")
         
+        
+        # Step 5: Save Assistant Message (if conversation_id)
+        if request.conversation_id:
+            message_content = f"I've analyzed {summary['papers_analyzed']} papers and extracted {summary['claims_extracted']} claims.\n\nFound **{summary['claims_verified']} verified claims** and **{summary['claims_suspicious']} suspicious items**."
+            db.add_message(request.conversation_id, "assistant", message_content)
+
         return AnalyzeResponse(
             query=request.query,
             papers=papers,
@@ -268,6 +313,29 @@ async def api_analyze(request: AnalyzeRequest):
         
     except Exception as e:
         print(f"❌ Error in analysis: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+# ============ Recursive Verification ============
+
+@app.post("/api/deep-verify", response_model=KnowledgeGraph)
+async def api_deep_verify(request: DeepVerifyRequest):
+    """
+    Perform rigorous recursive verification on a topic.
+    Searches -> Extracts Claims -> Verifies -> Recurses (Deep Research/Bullshit Detector).
+    """
+    print(f"🕵️ Deep Verifying: {request.query} (Depth: {request.max_depth})")
+    try:
+        researcher = RecursiveResearcher(db)
+        graph = await researcher.start_research(
+            query=request.query,
+            max_depth=request.max_depth,
+            max_papers=request.max_papers
+        )
+        return graph
+    except Exception as e:
+        print(f"❌ Error in deep verification: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

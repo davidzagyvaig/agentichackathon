@@ -145,6 +145,7 @@ class Database:
             print(f"❌ Error adding message: {e}")
             return {}
 
+
     @staticmethod
     def get_conversation_history(conversation_id: str) -> List[Dict[str, Any]]:
         """Get full history for a conversation."""
@@ -160,6 +161,23 @@ class Database:
         except Exception as e:
             print(f"❌ Error fetching history: {e}")
             return []
+
+    @staticmethod
+    def get_recent_conversations(limit: int = 10) -> List[Dict[str, Any]]:
+        """Get recent conversations for sidebar."""
+        if not supabase:
+            return []
+        try:
+            response = supabase.table("conversations")\
+                .select("*")\
+                .order("created_at", desc=True)\
+                .limit(limit)\
+                .execute()
+            return response.data if response.data else []
+        except Exception as e:
+            print(f"❌ Error fetching conversations: {e}")
+            return []
+
 
     # --- System ---
 
