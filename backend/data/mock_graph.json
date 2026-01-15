@@ -1,0 +1,366 @@
+{
+  "metadata": {
+    "topic": "Gut Microbiome and Depression",
+    "description": "Scientific knowledge graph exploring the relationship between gut microbiome composition and clinical depression",
+    "created": "2025-01-15",
+    "node_count": 26,
+    "edge_count": 42
+  },
+  "nodes": [
+    {
+      "id": "paper_2019_smith",
+      "type": "paper",
+      "label": "Smith et al. (2019): Gut-Brain Axis Review",
+      "metadata": {
+        "title": "The Gut-Brain Axis: A Comprehensive Review of Bidirectional Communication",
+        "authors": ["Smith, J.", "Brown, A.", "Williams, K."],
+        "year": 2019,
+        "venue": "Nature Reviews Neuroscience",
+        "citations": 450,
+        "doi": "10.1038/nrn.2019.001",
+        "abstract": "This comprehensive review examines the bidirectional communication between the gut microbiome and the central nervous system. We analyze evidence from 47 studies demonstrating that gut bacteria produce neurotransmitters including serotonin, dopamine, and GABA that can influence brain function through the vagus nerve."
+      }
+    },
+    {
+      "id": "paper_2020_chen",
+      "type": "paper",
+      "label": "Chen et al. (2020): Probiotic RCT",
+      "metadata": {
+        "title": "Probiotic Supplementation Reduces Depression: A 12-Week Randomized Controlled Trial",
+        "authors": ["Chen, L.", "Wang, M.", "Zhang, H."],
+        "year": 2020,
+        "venue": "Journal of Psychiatric Research",
+        "citations": 312,
+        "doi": "10.1016/j.jpsychires.2020.001",
+        "abstract": "In this 12-week randomized controlled trial with 200 participants, we demonstrate that daily probiotic supplementation (Lactobacillus rhamnosus) significantly reduced PHQ-9 depression scores compared to placebo (mean difference: 3.2, p < 0.01). Participants showed 40% greater improvement than control group."
+      }
+    },
+    {
+      "id": "paper_2022_lee",
+      "type": "paper",
+      "label": "Lee et al. (2022): No Probiotic Effect",
+      "metadata": {
+        "title": "No Effect of Probiotics on Depression: A Large Multi-Center Trial",
+        "authors": ["Lee, K.", "Park, S.", "Kim, J.", "Anderson, R."],
+        "year": 2022,
+        "venue": "JAMA Psychiatry",
+        "citations": 189,
+        "doi": "10.1001/jamapsychiatry.2022.001",
+        "abstract": "In our multi-center trial with 1,200 participants across 8 sites, we found no significant effect of probiotic supplementation on depression scores (mean difference: 0.8, p = 0.34). The smaller sample size and single-site design of previous positive studies may have inflated effect sizes."
+      }
+    },
+    {
+      "id": "paper_2021_johnson",
+      "type": "paper",
+      "label": "Johnson et al. (2021): Microbiome Diversity",
+      "metadata": {
+        "title": "Reduced Gut Microbiome Diversity in Major Depressive Disorder",
+        "authors": ["Johnson, R.", "Martinez, E.", "Thompson, L."],
+        "year": 2021,
+        "venue": "Molecular Psychiatry",
+        "citations": 278,
+        "doi": "10.1038/mp.2021.001",
+        "abstract": "Analysis of gut microbiome samples from 500 patients with MDD and 500 healthy controls revealed significantly reduced bacterial diversity (Shannon index: 2.1 vs 3.4, p < 0.001) in depressed individuals. Specific depletion of Lactobacillus and Bifidobacterium species was observed."
+      }
+    },
+    {
+      "id": "paper_2018_wilson",
+      "type": "paper",
+      "label": "Wilson et al. (2018): Vagus Nerve Pathway",
+      "metadata": {
+        "title": "The Vagus Nerve as a Mediator of Gut-Brain Communication in Depression",
+        "authors": ["Wilson, P.", "Garcia, M."],
+        "year": 2018,
+        "venue": "Neuroscience & Biobehavioral Reviews",
+        "citations": 523,
+        "doi": "10.1016/j.neubiorev.2018.001",
+        "abstract": "We demonstrate that the vagus nerve serves as the primary pathway for gut-brain communication. Vagotomized mice showed no antidepressant effects from probiotic treatment, while sham-operated controls showed significant improvement. This establishes the vagal pathway as essential for microbiome-mood effects."
+      }
+    },
+    {
+      "id": "paper_2023_patel",
+      "type": "paper",
+      "label": "Patel et al. (2023): Inflammation Mediator",
+      "metadata": {
+        "title": "Gut Dysbiosis Drives Depression Through Systemic Inflammation",
+        "authors": ["Patel, A.", "Roberts, C.", "Green, D."],
+        "year": 2023,
+        "venue": "Brain, Behavior, and Immunity",
+        "citations": 145,
+        "doi": "10.1016/j.bbi.2023.001",
+        "abstract": "Our study reveals that gut dysbiosis triggers systemic inflammation, which in turn affects brain function. We found elevated IL-6 and TNF-alpha levels in depressed patients correlated with reduced microbiome diversity (r = -0.67, p < 0.001). Anti-inflammatory treatment partially reversed depressive symptoms."
+      }
+    },
+    {
+      "id": "paper_2020_taylor",
+      "type": "paper",
+      "label": "Taylor et al. (2020): Diet-Microbiome Link",
+      "metadata": {
+        "title": "Mediterranean Diet Improves Mood via Gut Microbiome Modulation",
+        "authors": ["Taylor, S.", "Moore, J.", "Clark, A."],
+        "year": 2020,
+        "venue": "Nutritional Neuroscience",
+        "citations": 201,
+        "doi": "10.1080/1028415X.2020.001",
+        "abstract": "A 6-month intervention study with 150 participants demonstrated that adherence to Mediterranean diet increased beneficial gut bacteria by 45% and reduced depression scores by 32%. Microbiome changes preceded mood improvements by 2-4 weeks, suggesting a causal pathway."
+      }
+    },
+    {
+      "id": "paper_2017_miller",
+      "type": "paper",
+      "label": "Miller et al. (2017): Foundational Review",
+      "metadata": {
+        "title": "The Microbiome-Gut-Brain Axis: From Bowel to Behavior",
+        "authors": ["Miller, A.", "Foster, J."],
+        "year": 2017,
+        "venue": "Annual Review of Neuroscience",
+        "citations": 892,
+        "doi": "10.1146/annurev.neuro.2017.001",
+        "abstract": "This foundational review synthesizes evidence for the microbiome-gut-brain axis. We propose a model where gut bacteria influence behavior through four pathways: neural (vagus), endocrine (HPA axis), immune (cytokines), and metabolic (short-chain fatty acids)."
+      }
+    },
+    {
+      "id": "paper_2024_garcia",
+      "type": "paper",
+      "label": "Garcia et al. (2024): Meta-Analysis",
+      "metadata": {
+        "title": "Probiotics for Depression: A Meta-Analysis of 42 RCTs",
+        "authors": ["Garcia, M.", "Lopez, R.", "Kim, S."],
+        "year": 2024,
+        "venue": "Lancet Psychiatry",
+        "citations": 67,
+        "doi": "10.1016/S2215-0366(24)00001",
+        "abstract": "Meta-analysis of 42 randomized controlled trials (n=4,851) reveals a small but significant effect of probiotics on depression (SMD = 0.34, 95% CI: 0.12-0.56). Effect sizes were larger in studies with clinical populations (SMD = 0.52) versus healthy volunteers (SMD = 0.18). Publication bias was detected."
+      }
+    },
+    {
+      "id": "paper_2023_zhang",
+      "type": "paper",
+      "label": "Zhang et al. (2023): Skeptical Review",
+      "metadata": {
+        "title": "Questioning the Gut-Depression Link: Methodological Concerns",
+        "authors": ["Zhang, W.", "Brown, T."],
+        "year": 2023,
+        "venue": "Psychological Medicine",
+        "citations": 89,
+        "doi": "10.1017/S0033291723001",
+        "abstract": "We critically examine 35 studies claiming gut-depression links. Major methodological issues include: small sample sizes (median n=78), lack of dietary controls, inconsistent bacterial assessments, and failure to account for medication effects. Only 4/35 studies met rigorous quality criteria."
+      }
+    },
+    {
+      "id": "paper_2021_nakamura",
+      "type": "paper",
+      "label": "Nakamura et al. (2021): SCFA Mechanism",
+      "metadata": {
+        "title": "Short-Chain Fatty Acids Modulate Serotonin Synthesis in the Gut",
+        "authors": ["Nakamura, T.", "Sato, K.", "Yamamoto, H."],
+        "year": 2021,
+        "venue": "Cell Metabolism",
+        "citations": 234,
+        "doi": "10.1016/j.cmet.2021.001",
+        "abstract": "We demonstrate that short-chain fatty acids (SCFAs) produced by gut bacteria directly stimulate serotonin synthesis in enterochromaffin cells. Butyrate supplementation increased gut serotonin levels by 180% in germ-free mice. Since 90% of body serotonin is gut-derived, this pathway may influence mood."
+      }
+    },
+    {
+      "id": "paper_2022_martinez",
+      "type": "paper",
+      "label": "Martinez et al. (2022): FMT Study",
+      "metadata": {
+        "title": "Fecal Microbiota Transplant Alleviates Treatment-Resistant Depression",
+        "authors": ["Martinez, E.", "Green, A.", "White, C."],
+        "year": 2022,
+        "venue": "Nature Medicine",
+        "citations": 156,
+        "doi": "10.1038/nm.2022.001",
+        "abstract": "In this open-label pilot study, 12 patients with treatment-resistant depression received fecal microbiota transplant from healthy donors. 8/12 (67%) showed significant improvement at 8 weeks (>50% reduction in HAM-D scores). Responders showed increased Bifidobacterium levels post-transplant."
+      }
+    },
+    {
+      "id": "claim_microbiome_depression",
+      "type": "claim",
+      "label": "Gut microbiome composition influences depression risk",
+      "metadata": {
+        "first_proposed": 2015,
+        "consensus_level": "emerging",
+        "confidence": 0.72,
+        "description": "Changes in gut bacterial composition are associated with and may contribute to the development of clinical depression"
+      }
+    },
+    {
+      "id": "claim_probiotics_effective",
+      "type": "claim",
+      "label": "Probiotic supplementation can reduce depression symptoms",
+      "metadata": {
+        "first_proposed": 2016,
+        "consensus_level": "contested",
+        "confidence": 0.58,
+        "description": "Daily probiotic intake leads to measurable improvements in depression scores in clinical populations"
+      }
+    },
+    {
+      "id": "claim_vagus_pathway",
+      "type": "claim",
+      "label": "Vagus nerve mediates gut-brain mood effects",
+      "metadata": {
+        "first_proposed": 2011,
+        "consensus_level": "established",
+        "confidence": 0.85,
+        "description": "The vagus nerve serves as the primary communication pathway between gut microbiome and brain regions involved in mood regulation"
+      }
+    },
+    {
+      "id": "claim_inflammation_mediator",
+      "type": "claim",
+      "label": "Gut dysbiosis causes depression via systemic inflammation",
+      "metadata": {
+        "first_proposed": 2018,
+        "consensus_level": "emerging",
+        "confidence": 0.68,
+        "description": "Imbalanced gut bacteria trigger inflammatory responses that affect brain function and mood"
+      }
+    },
+    {
+      "id": "claim_diversity_reduced",
+      "type": "claim",
+      "label": "Depressed individuals have reduced gut bacterial diversity",
+      "metadata": {
+        "first_proposed": 2014,
+        "consensus_level": "established",
+        "confidence": 0.82,
+        "description": "Clinical depression is associated with significantly lower diversity of gut microbiome species"
+      }
+    },
+    {
+      "id": "claim_diet_modulates",
+      "type": "claim",
+      "label": "Diet affects mood through microbiome changes",
+      "metadata": {
+        "first_proposed": 2017,
+        "consensus_level": "emerging",
+        "confidence": 0.74,
+        "description": "Dietary interventions improve depression symptoms primarily by altering gut microbiome composition"
+      }
+    },
+    {
+      "id": "claim_scfa_serotonin",
+      "type": "claim",
+      "label": "SCFAs from gut bacteria influence serotonin production",
+      "metadata": {
+        "first_proposed": 2019,
+        "consensus_level": "established",
+        "confidence": 0.88,
+        "description": "Short-chain fatty acids produced by gut bacteria directly regulate serotonin synthesis in the intestinal tract"
+      }
+    },
+    {
+      "id": "claim_probiotics_ineffective",
+      "type": "claim",
+      "label": "Probiotics have no significant effect on depression",
+      "metadata": {
+        "first_proposed": 2022,
+        "consensus_level": "contested",
+        "confidence": 0.45,
+        "description": "Large-scale trials fail to replicate probiotic benefits for depression found in smaller studies"
+      }
+    },
+    {
+      "id": "claim_methodology_flawed",
+      "type": "claim",
+      "label": "Gut-depression research has significant methodological problems",
+      "metadata": {
+        "first_proposed": 2023,
+        "consensus_level": "noted",
+        "confidence": 0.62,
+        "description": "Most studies linking gut microbiome to depression suffer from small samples, lack of controls, and publication bias"
+      }
+    },
+    {
+      "id": "claim_fmt_promising",
+      "type": "claim",
+      "label": "Fecal transplant may treat resistant depression",
+      "metadata": {
+        "first_proposed": 2022,
+        "consensus_level": "preliminary",
+        "confidence": 0.55,
+        "description": "Early evidence suggests fecal microbiota transplantation could help patients who don't respond to standard antidepressants"
+      }
+    },
+    {
+      "id": "claim_effect_small",
+      "type": "claim",
+      "label": "Probiotic effect on depression is small but real",
+      "metadata": {
+        "first_proposed": 2024,
+        "consensus_level": "emerging",
+        "confidence": 0.65,
+        "description": "Meta-analyses confirm a statistically significant but clinically modest effect of probiotics on depression"
+      }
+    },
+    {
+      "id": "claim_hpa_axis",
+      "type": "claim",
+      "label": "Gut bacteria influence HPA axis stress response",
+      "metadata": {
+        "first_proposed": 2012,
+        "consensus_level": "established",
+        "confidence": 0.80,
+        "description": "The microbiome modulates hypothalamic-pituitary-adrenal axis function, affecting cortisol release and stress reactivity"
+      }
+    },
+    {
+      "id": "claim_bidirectional",
+      "type": "claim",
+      "label": "Depression also alters the gut microbiome",
+      "metadata": {
+        "first_proposed": 2016,
+        "consensus_level": "emerging",
+        "confidence": 0.70,
+        "description": "The relationship is bidirectional: depression-related behaviors and stress hormones change gut bacterial composition"
+      }
+    }
+  ],
+  "edges": [
+    {"id": "e01", "source": "paper_2019_smith", "target": "claim_microbiome_depression", "type": "supports", "weight": 0.9},
+    {"id": "e02", "source": "paper_2019_smith", "target": "claim_vagus_pathway", "type": "supports", "weight": 0.85},
+    {"id": "e03", "source": "paper_2020_chen", "target": "claim_probiotics_effective", "type": "supports", "weight": 0.88},
+    {"id": "e04", "source": "paper_2022_lee", "target": "claim_probiotics_effective", "type": "contradicts", "weight": 0.82},
+    {"id": "e05", "source": "paper_2022_lee", "target": "claim_probiotics_ineffective", "type": "supports", "weight": 0.85},
+    {"id": "e06", "source": "paper_2021_johnson", "target": "claim_diversity_reduced", "type": "supports", "weight": 0.92},
+    {"id": "e07", "source": "paper_2021_johnson", "target": "claim_microbiome_depression", "type": "supports", "weight": 0.78},
+    {"id": "e08", "source": "paper_2018_wilson", "target": "claim_vagus_pathway", "type": "supports", "weight": 0.95},
+    {"id": "e09", "source": "paper_2023_patel", "target": "claim_inflammation_mediator", "type": "supports", "weight": 0.87},
+    {"id": "e10", "source": "paper_2023_patel", "target": "claim_diversity_reduced", "type": "supports", "weight": 0.75},
+    {"id": "e11", "source": "paper_2020_taylor", "target": "claim_diet_modulates", "type": "supports", "weight": 0.84},
+    {"id": "e12", "source": "paper_2020_taylor", "target": "claim_microbiome_depression", "type": "supports", "weight": 0.72},
+    {"id": "e13", "source": "paper_2017_miller", "target": "claim_vagus_pathway", "type": "supports", "weight": 0.88},
+    {"id": "e14", "source": "paper_2017_miller", "target": "claim_hpa_axis", "type": "supports", "weight": 0.90},
+    {"id": "e15", "source": "paper_2017_miller", "target": "claim_microbiome_depression", "type": "supports", "weight": 0.85},
+    {"id": "e16", "source": "paper_2024_garcia", "target": "claim_effect_small", "type": "supports", "weight": 0.91},
+    {"id": "e17", "source": "paper_2024_garcia", "target": "claim_probiotics_effective", "type": "supports", "weight": 0.65},
+    {"id": "e18", "source": "paper_2023_zhang", "target": "claim_methodology_flawed", "type": "supports", "weight": 0.88},
+    {"id": "e19", "source": "paper_2023_zhang", "target": "claim_probiotics_effective", "type": "contradicts", "weight": 0.72},
+    {"id": "e20", "source": "paper_2021_nakamura", "target": "claim_scfa_serotonin", "type": "supports", "weight": 0.94},
+    {"id": "e21", "source": "paper_2021_nakamura", "target": "claim_microbiome_depression", "type": "supports", "weight": 0.80},
+    {"id": "e22", "source": "paper_2022_martinez", "target": "claim_fmt_promising", "type": "supports", "weight": 0.75},
+    {"id": "e23", "source": "paper_2022_martinez", "target": "claim_microbiome_depression", "type": "supports", "weight": 0.82},
+    {"id": "e24", "source": "paper_2020_chen", "target": "paper_2018_wilson", "type": "cites", "weight": 1.0},
+    {"id": "e25", "source": "paper_2020_chen", "target": "paper_2017_miller", "type": "cites", "weight": 1.0},
+    {"id": "e26", "source": "paper_2022_lee", "target": "paper_2020_chen", "type": "cites", "weight": 1.0},
+    {"id": "e27", "source": "paper_2022_lee", "target": "paper_2019_smith", "type": "cites", "weight": 1.0},
+    {"id": "e28", "source": "paper_2021_johnson", "target": "paper_2017_miller", "type": "cites", "weight": 1.0},
+    {"id": "e29", "source": "paper_2023_patel", "target": "paper_2021_johnson", "type": "cites", "weight": 1.0},
+    {"id": "e30", "source": "paper_2023_patel", "target": "paper_2019_smith", "type": "cites", "weight": 1.0},
+    {"id": "e31", "source": "paper_2024_garcia", "target": "paper_2020_chen", "type": "cites", "weight": 1.0},
+    {"id": "e32", "source": "paper_2024_garcia", "target": "paper_2022_lee", "type": "cites", "weight": 1.0},
+    {"id": "e33", "source": "paper_2023_zhang", "target": "paper_2020_chen", "type": "cites", "weight": 1.0},
+    {"id": "e34", "source": "paper_2023_zhang", "target": "paper_2021_johnson", "type": "cites", "weight": 1.0},
+    {"id": "e35", "source": "paper_2021_nakamura", "target": "paper_2018_wilson", "type": "cites", "weight": 1.0},
+    {"id": "e36", "source": "paper_2022_martinez", "target": "paper_2021_johnson", "type": "cites", "weight": 1.0},
+    {"id": "e37", "source": "paper_2019_smith", "target": "paper_2017_miller", "type": "cites", "weight": 1.0},
+    {"id": "e38", "source": "claim_bidirectional", "target": "claim_microbiome_depression", "type": "supports", "weight": 0.70},
+    {"id": "e39", "source": "paper_2019_smith", "target": "claim_bidirectional", "type": "supports", "weight": 0.75},
+    {"id": "e40", "source": "paper_2022_lee", "target": "paper_2024_garcia", "type": "cites", "weight": 1.0},
+    {"id": "e41", "source": "claim_effect_small", "target": "claim_probiotics_effective", "type": "supports", "weight": 0.60},
+    {"id": "e42", "source": "claim_effect_small", "target": "claim_probiotics_ineffective", "type": "contradicts", "weight": 0.55}
+  ]
+}

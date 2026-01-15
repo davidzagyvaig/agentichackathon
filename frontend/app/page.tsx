@@ -14,15 +14,33 @@ import {
   MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import ReactMarkdown from "react-markdown";
 
 // Types
+interface ClarificationQuestion {
+  question: string;
+  options: string[];
+  required: boolean;
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
   isThinking?: boolean;
+  clarifications?: ClarificationQuestion[];
+  isDeepResearchReport?: boolean;
+  contradictions?: { summary: string }[];
 }
+
+// Research stages for progress indicator
+const DEEP_RESEARCH_STAGES = [
+  { id: 'clarify', label: 'Understanding your question...' },
+  { id: 'enrich', label: 'Planning research strategy...' },
+  { id: 'research', label: 'Deep research in progress...' },
+  { id: 'complete', label: 'Compiling report...' },
+];
 
 const STATUS_COLORS = {
   verified: "#22c55e",
@@ -35,69 +53,23 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [conversations, setConversations] = useState<any[]>([]);
+  const [researchStage, setResearchStage] = useState<string | null>(null);
+  const [pendingClarifications, setPendingClarifications] = useState<Record<string, string>>({});
+  const [awaitingClarification, setAwaitingClarification] = useState(false);
+  const [currentQuery, setCurrentQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Initialize welcome message on client side only to avoid hydration mismatch
   useEffect(() => {
-    fetchConversations();
-    // Default welcome message
     setMessages([
       {
         id: "welcome",
         role: "assistant",
-        content: "Hello! I'm ClaimGraph. I don't summarize papers; I **verify** their claims against ground truth. \n\nAsk me about a scientific topic (e.g., 'Do transformer models effectively predict climate tipping points?'), and I'll build a verification graph for you.",
+        content: "Hello! I'm ClaimGraph Deep Research. I conduct comprehensive scientific analysis using a knowledge graph of verified claims.\n\nAsk me about a topic (e.g., 'What is the relationship between gut microbiome and depression?'), and I'll analyze the evidence, identify contradictions, and provide a grounded research report.",
         timestamp: new Date(),
       },
     ]);
   }, []);
-
-  const fetchConversations = async () => {
-    try {
-      const res = await fetch("http://localhost:8000/api/conversations");
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setConversations(data);
-      }
-    } catch (e) {
-      console.error("Failed to fetch conversations", e);
-    }
-  };
-
-  const createNewSession = async () => {
-    setConversationId(null);
-    setMessages([
-      {
-        id: "welcome-" + Date.now(),
-        role: "assistant",
-        content: "Starting a new verification session. What would you like to verify?",
-        timestamp: new Date(),
-      },
-    ]);
-    setNodes([]); // Clear graph
-    setEdges([]);
-    setGraphVisible(false);
-  };
-
-  const loadConversation = async (id: string) => {
-    setConversationId(id);
-    setGraphVisible(false); // Maybe keep it handled by user?
-    try {
-      const res = await fetch(`http://localhost:8000/api/conversations/${id}`);
-      const data = await res.json();
-      // Transform backend messages to frontend format
-      const loadedMessages: Message[] = data.map((msg: any) => ({
-        id: msg.id,
-        role: msg.role,
-        content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
-        timestamp: new Date(msg.created_at)
-      }));
-      setMessages(loadedMessages);
-    } catch (e) {
-      console.error("Failed to load conversation", e);
-    }
-  };
 
   // Graph State
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -110,105 +82,206 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Handle clarification answer
+  const handleClarificationAnswer = (question: string, answer: string) => {
+    setPendingClarifications(prev => ({
+      ...prev,
+      [question]: answer
+    }));
+  };
+
+  // Submit clarifications and continue research
+  const submitClarifications = async () => {
+    setAwaitingClarification(false);
+    
+    // Add user's clarification answers as a message
+    const answersText = Object.entries(pendingClarifications)
+      .map(([q, a]) => `${q}: ${a}`)
+      .join('\n');
+    
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      role: "user",
+      content: answersText,
+      timestamp: new Date(),
+    }]);
+
+    // Continue with deep research
+    await executeDeepResearch(currentQuery, pendingClarifications);
+    setPendingClarifications({});
+  };
+
+  // Main deep research flow
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
-    // Create session if not exists
-    let currentConvId = conversationId;
-    if (!currentConvId) {
-      try {
-        const res = await fetch(`http://localhost:8000/api/conversations?title=${encodeURIComponent(inputValue.substring(0, 30))}`, { method: 'POST' });
-        const newConv = await res.json();
-        currentConvId = newConv.id;
-        setConversationId(currentConvId);
-        fetchConversations(); // Refresh sidebar
-      } catch (e) {
-        console.error("Failed to create conversation", e);
-      }
-    }
-
+    const userQuery = inputValue;
     const userMsg: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: inputValue,
+      content: userQuery,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMsg]);
     setInputValue("");
     setIsAnalyzing(true);
-
-    // Add thinking message
-    const thinkingId = "thinking-" + Date.now();
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: thinkingId,
-        role: "assistant",
-        content: "🔍 Searching literature, extracting claims, and verifying citations...",
-        timestamp: new Date(),
-        isThinking: true,
-      },
-    ]);
+    setCurrentQuery(userQuery);
+    setResearchStage('clarify');
 
     try {
-      const response = await fetch("http://localhost:8000/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: userMsg.content,
-          max_papers: 5,
-          extract_claims: true,
-          validate_citations: true,
-          conversation_id: currentConvId // Pass ID for persistence
-        }),
+      // Step 1: Check if clarification is needed
+      const clarifyRes = await fetch('http://localhost:8000/api/deep-research/clarify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: userQuery }),
       });
+      const clarifyData = await clarifyRes.json();
 
-      const data = await response.json();
+      if (clarifyData.needs_clarification && clarifyData.questions?.length > 0) {
+        // Show clarification questions
+        setResearchStage(null);
+        setAwaitingClarification(true);
+        setMessages(prev => [...prev, {
+          id: 'clarify-' + Date.now(),
+          role: 'assistant',
+          content: 'I have a few questions to better understand your research needs:',
+          clarifications: clarifyData.questions,
+          timestamp: new Date(),
+        }]);
+        setIsAnalyzing(false);
+        return;
+      }
 
-      // Remove thinking message
-      setMessages((prev) => prev.filter((m) => m.id !== thinkingId));
-
-      // Add response message
-      const responseMsg: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: `I've analyzed ${data.summary.papers_analyzed} papers and extracted ${data.summary.claims_extracted} claims.\n\n` +
-          `Found **${data.summary.claims_verified} verified claims** and **${data.summary.claims_suspicious} suspicious items**.\n\n` +
-          `I've built a knowledge graph on the right. You can now deeply verify citations by clicking on citation nodes.`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, responseMsg]);
-
-      // Update Graph by fetching from backend
-      await fetchGraph();
-      setGraphVisible(true);
+      // No clarification needed, proceed with research
+      await executeDeepResearch(userQuery, {});
 
     } catch (error) {
       console.error("Error:", error);
-      setMessages((prev) => prev.filter((m) => m.id !== thinkingId));
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          role: "assistant",
-          content: "Sorry, I encountered an error analyzing that topic. Please try again.",
-          timestamp: new Date(),
-        },
-      ]);
+      setResearchStage(null);
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: "Sorry, I encountered an error. Please try again.",
+        timestamp: new Date(),
+      }]);
     } finally {
-      setIsAnalyzing(false);
+      if (!awaitingClarification) {
+        setIsAnalyzing(false);
+        setResearchStage(null);
+      }
     }
   };
 
-  const fetchGraph = async () => {
+  // Execute deep research with optional clarifications
+  const executeDeepResearch = async (query: string, clarifications: Record<string, string>) => {
+    setIsAnalyzing(true);
+    setResearchStage('enrich');
+
+    // Add progress message
+    const progressId = 'progress-' + Date.now();
+    setMessages(prev => [...prev, {
+      id: progressId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      isThinking: true,
+    }]);
+
     try {
-      const response = await fetch("http://localhost:8000/api/graph?format=reactflow");
+      setResearchStage('research');
+
+      const response = await fetch('http://localhost:8000/api/deep-research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query,
+          clarifications,
+          max_tool_calls: 50,
+          use_background: false, // Use sync for faster demo
+        }),
+      });
+
+      setResearchStage('complete');
+      const data = await response.json();
+
+      // Remove progress message
+      setMessages(prev => prev.filter(m => m.id !== progressId));
+
+      // Add research report
+      const reportMsg: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: data.report || 'Research completed but no report was generated.',
+        timestamp: new Date(),
+        isDeepResearchReport: true,
+        contradictions: data.contradictions || [],
+      };
+      setMessages(prev => [...prev, reportMsg]);
+
+      // Fetch and display the mock graph
+      await fetchMockGraph();
+      setGraphVisible(true);
+
+    } catch (error) {
+      console.error("Deep research error:", error);
+      setMessages(prev => prev.filter(m => m.id !== progressId));
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: 'Sorry, the deep research encountered an error. Please try again.',
+        timestamp: new Date(),
+      }]);
+    } finally {
+      setIsAnalyzing(false);
+      setResearchStage(null);
+    }
+  };
+
+  // Fetch mock graph for visualization
+  const fetchMockGraph = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/deep-research/graph");
       const data = await response.json();
 
       if (data.nodes && data.edges) {
-        setNodes(data.nodes);
-        setEdges(data.edges);
+        // Convert mock graph format to React Flow format
+        const flowNodes: Node[] = data.nodes.map((n: any, i: number) => ({
+          id: n.id,
+          position: { 
+            x: n.type === 'paper' ? 100 : 400, 
+            y: i * 80 
+          },
+          data: { 
+            label: n.label,
+            ...n.metadata,
+            type: n.type
+          },
+          style: {
+            background: n.type === 'paper' ? '#065f46' : '#374151',
+            color: 'white',
+            border: '1px solid #4b5563',
+            borderRadius: '8px',
+            padding: '10px',
+            fontSize: '12px',
+            width: 200,
+          }
+        }));
+
+        const flowEdges: Edge[] = data.edges.map((e: any) => ({
+          id: e.id,
+          source: e.source,
+          target: e.target,
+          label: e.type,
+          style: {
+            stroke: e.type === 'contradicts' ? '#ef4444' : e.type === 'supports' ? '#22c55e' : '#6b7280',
+          },
+          labelStyle: { fill: '#9ca3af', fontSize: 10 },
+          animated: e.type === 'contradicts',
+        }));
+
+        setNodes(flowNodes);
+        setEdges(flowEdges);
       }
     } catch (error) {
       console.error("Failed to fetch graph:", error);
@@ -216,122 +289,23 @@ export default function Home() {
   };
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    // Show details in chat or modal
-    if (node.id.startsWith("paper-")) {
-      const paper = node.data;
-      if (paper) setSelectedNode({ type: 'paper', data: paper });
-    } else if (node.id.startsWith("claim-")) {
-      const claim = node.data;
-      if (claim) setSelectedNode({ type: 'claim', data: claim });
-    } else if (node.id.startsWith("citation-")) {
-      const citation = node.data;
-      if (citation) setSelectedNode({ type: 'citation', data: citation });
-    }
+    setSelectedNode({ type: node.data.type || 'paper', data: node.data });
     setGraphVisible(true);
   }, []);
 
-  const handleDeepVerify = async (citation: any) => {
-    // Trigger analysis for this citation
-    if (!citation.title) return;
-
-    setGraphVisible(true); // Keep visible? Or switch to chat? Switch to chat to see progress.
-    // But we are in split view on desktop.
-
-    const newQuery = `Verify paper: ${citation.title}`;
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: newQuery,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setIsAnalyzing(true);
-
-    // Close details
-    setSelectedNode(null);
-
-    // Add thinking
-    const thinkingId = "thinking-" + Date.now();
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: thinkingId,
-        role: "assistant",
-        content: "🔍 Deep verifying citation...",
-        timestamp: new Date(),
-        isThinking: true,
-      },
-    ]);
-
-    try {
-      const response = await fetch("http://localhost:8000/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: citation.title, // Search by title
-          max_papers: 1, // Focus on this one
-          extract_claims: true,
-          validate_citations: true,
-          conversation_id: conversationId // Maintain context
-        }),
-      });
-      const data = await response.json();
-      // Remove thinking message
-      setMessages((prev) => prev.filter((m) => m.id !== thinkingId));
-
-      // Add response
-      const responseMsg: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: `Deep verification complete for "${citation.title}".\n\nExtracted ${data.summary.claims_extracted} claims. Graph updated.`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, responseMsg]);
-
-      await fetchGraph();
-
-    } catch (error) {
-      console.error(error);
-      setMessages((prev) => prev.filter((m) => m.id !== thinkingId));
-    } finally {
-      setIsAnalyzing(false);
-    }
+  // Format report text with clickable citations
+  const formatReportContent = (text: string) => {
+    // Replace [node_id] patterns with styled spans
+    return text.replace(/\[([^\]]+)\]/g, (match, nodeId) => {
+      if (nodeId.startsWith('paper_') || nodeId.startsWith('claim_')) {
+        return `<span class="text-green-400 cursor-pointer hover:underline" data-node="${nodeId}">[${nodeId}]</span>`;
+      }
+      return match;
+    });
   };
 
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden font-sans">
-      {/* Sidebar - History */}
-      <div className="w-[260px] bg-black hidden md:flex flex-col border-r border-gray-800">
-        <div className="p-3">
-          <button
-            onClick={createNewSession}
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-200 bg-gray-900 hover:bg-gray-800 rounded-md transition-colors border border-gray-700"
-          >
-            <span>+</span> New verification
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-3 py-2">
-          <div className="text-xs font-semibold text-gray-500 mb-2 px-2">Recent</div>
-          <div className="space-y-1">
-            {conversations.map((conv) => (
-              <button
-                key={conv.id}
-                onClick={() => loadConversation(conv.id)}
-                className={`w-full text-left px-3 py-2 text-sm rounded-md truncate transition-colors ${conversationId === conv.id ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-900'}`}
-              >
-                {conv.title}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="p-4 border-t border-gray-800">
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <div className="w-6 h-6 rounded-full bg-green-900 flex items-center justify-center text-green-500 font-bold text-xs">U</div>
-            User Account
-          </div>
-        </div>
-      </div>
-
       {/* Main Content Split */}
       <div className="flex-1 flex flex-col md:flex-row h-full relative">
 
@@ -346,28 +320,123 @@ export default function Home() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-800">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {msg.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-full bg-green-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
-                    CG
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-thumb-gray-800">
+            <div className="max-w-3xl mx-auto space-y-6">
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex gap-4 items-center ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {msg.role === 'assistant' && (
+                    <div className="w-8 h-8 rounded-full bg-green-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
+                      CG
+                    </div>
+                  )}
+                  <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-5 py-3 text-sm leading-relaxed ${msg.role === 'user'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-800 text-gray-100 border border-gray-700'
+                    } ${msg.isThinking ? 'animate-pulse' : ''}`}>
+                    
+                    {/* Progress indicator for thinking state */}
+                    {msg.isThinking && researchStage && (
+                      <div className="flex items-center gap-2 p-2 bg-green-900/30 rounded-lg border border-green-700">
+                        <div className="animate-spin w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full" />
+                        <span className="text-sm text-green-300">
+                          {DEEP_RESEARCH_STAGES.find(s => s.id === researchStage)?.label}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Regular message content */}
+                    {!msg.isThinking && !msg.isDeepResearchReport && (
+                      <div className="prose prose-invert prose-sm max-w-none prose-p:my-2 prose-strong:text-white">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    )}
+
+                    {/* Deep research report */}
+                    {msg.isDeepResearchReport && (
+                      <div className="space-y-4">
+                        <div className="p-4 bg-green-900/20 rounded-lg border border-green-700">
+                          <h4 className="text-green-300 font-semibold mb-2 flex items-center gap-2">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Research Report
+                          </h4>
+                          <div 
+                            className="whitespace-pre-wrap text-gray-200"
+                            dangerouslySetInnerHTML={{ __html: formatReportContent(msg.content) }}
+                          />
+                        </div>
+                        
+                        {msg.contradictions && msg.contradictions.length > 0 && (
+                          <div className="p-3 bg-red-900/20 rounded-lg border border-red-700">
+                            <h5 className="text-red-300 font-semibold mb-2 flex items-center gap-2">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              Contradictions Found
+                            </h5>
+                            {msg.contradictions.map((c, i) => (
+                              <div key={i} className="text-sm text-red-200 py-1">{c.summary}</div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Clarification questions */}
+                    {msg.clarifications && msg.clarifications.length > 0 && (
+                      <div className="space-y-3 mt-3">
+                        {msg.clarifications.map((q, i) => (
+                          <div key={i} className="p-3 bg-gray-700/50 rounded-lg">
+                            <p className="text-sm mb-2 text-gray-200">{q.question}</p>
+                            <div className="flex flex-wrap gap-2">
+                              {q.options && q.options.length > 0 ? (
+                                q.options.map((opt) => (
+                                  <button
+                                    key={opt}
+                                    onClick={() => handleClarificationAnswer(q.question, opt)}
+                                    className={`px-3 py-1 rounded text-xs transition-colors ${
+                                      pendingClarifications[q.question] === opt
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-600 hover:bg-gray-500 text-gray-200'
+                                    }`}
+                                  >
+                                    {opt}
+                                  </button>
+                                ))
+                              ) : (
+                                <input
+                                  type="text"
+                                  placeholder="Type your answer..."
+                                  className="flex-1 px-3 py-1 bg-gray-600 rounded text-xs text-white placeholder-gray-400"
+                                  onChange={(e) => handleClarificationAnswer(q.question, e.target.value)}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {awaitingClarification && (
+                          <button
+                            onClick={submitClarifications}
+                            disabled={Object.keys(pendingClarifications).length === 0}
+                            className="w-full py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors mt-2"
+                          >
+                            Continue Research →
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
-                <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-5 py-3 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-br-none'
-                  : 'bg-gray-800 text-gray-100 rounded-bl-none border border-gray-700'
-                  } ${msg.isThinking ? 'animate-pulse' : ''}`}>
-                  {msg.content}
+                  {msg.role === 'user' && (
+                    <div className="w-8 h-8 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
+                      U
+                    </div>
+                  )}
                 </div>
-                {msg.role === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
-                    U
-                  </div>
-                )}
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
 
           {/* Input Area */}
@@ -382,12 +451,13 @@ export default function Home() {
                     handleSendMessage();
                   }
                 }}
-                placeholder="Ask a scientific question to verify..."
-                className="w-full bg-gray-800 text-white rounded-xl pl-4 pr-12 py-3 md:py-4 focus:outline-none focus:ring-2 focus:ring-green-600/50 border border-gray-700 resize-none h-[60px] md:h-[100px] scrollbar-hide text-sm md:text-base"
+                placeholder="Ask a research question (e.g., 'What causes depression according to gut microbiome research?')"
+                disabled={awaitingClarification}
+                className="w-full bg-gray-800 text-white rounded-xl pl-4 pr-12 py-3 md:py-4 focus:outline-none focus:ring-2 focus:ring-green-600/50 border border-gray-700 resize-none h-[60px] md:h-[100px] scrollbar-hide text-sm md:text-base disabled:opacity-50"
               />
               <button
                 onClick={handleSendMessage}
-                disabled={isAnalyzing || !inputValue.trim()}
+                disabled={isAnalyzing || !inputValue.trim() || awaitingClarification}
                 className="absolute right-3 bottom-3 md:bottom-4 p-2 bg-green-600 text-white rounded-lg hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -397,7 +467,7 @@ export default function Home() {
               </button>
             </div>
             <div className="text-center mt-2">
-              <p className="text-[10px] text-gray-500">ClaimGraph verifies claims against ground truth. AI can make mistakes.</p>
+              <p className="text-[10px] text-gray-500">ClaimGraph Deep Research - Powered by o3-deep-research. AI analysis may contain errors.</p>
             </div>
           </div>
         </div>
@@ -409,12 +479,15 @@ export default function Home() {
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
               Knowledge Graph
             </span>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                <span className="w-2 h-2 rounded-full bg-green-500"></span> Verified
+                <span className="w-2 h-2 rounded-full bg-green-500"></span> Supports
               </span>
               <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                <span className="w-2 h-2 rounded-full bg-red-500"></span> Suspicious
+                <span className="w-2 h-2 rounded-full bg-red-500"></span> Contradicts
+              </span>
+              <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                <span className="w-2 h-2 rounded-full bg-gray-500"></span> Cites
               </span>
             </div>
           </div>
@@ -435,9 +508,8 @@ export default function Home() {
                 <MiniMap
                   className="bg-gray-800 border-gray-700"
                   nodeColor={(n) => {
-                    if (n.id.startsWith('paper')) return '#065f46';
-                    if (n.id.startsWith('claim')) return '#374151';
-                    if (n.id.startsWith('citation')) return '#4b5563';
+                    if (n.data?.type === 'paper') return '#065f46';
+                    if (n.data?.type === 'claim') return '#374151';
                     return '#6b7280';
                   }}
                 />
@@ -449,7 +521,7 @@ export default function Home() {
                   <line x1="2" y1="12" x2="22" y2="12"></line>
                   <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
                 </svg>
-                <p className="text-sm">Start a verification to build the graph</p>
+                <p className="text-sm">Start a research query to see the knowledge graph</p>
               </div>
             )}
 
@@ -458,99 +530,54 @@ export default function Home() {
               <div className="absolute top-4 right-4 w-80 bg-gray-900/95 backdrop-blur-md border border-gray-700 rounded-xl p-4 shadow-2xl overflow-y-auto max-h-[80%]">
                 <div className="flex justify-between items-start mb-3">
                   <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    {selectedNode.type === 'paper' ? 'Paper Details' :
-                      selectedNode.type === 'claim' ? 'Claim Verification' : 'Citation Source'}
+                    {selectedNode.type === 'paper' ? 'Paper Details' : 'Claim Details'}
                   </span>
                   <button onClick={() => setSelectedNode(null)} className="text-gray-400 hover:text-white">✕</button>
                 </div>
 
                 {selectedNode.type === 'paper' && (
                   <div className="space-y-3">
-                    <h3 className="font-bold text-white leading-snug">{selectedNode.data.title}</h3>
-                    <div className="text-xs text-gray-400">
-                      {selectedNode.data.authors?.join(', ')} • {selectedNode.data.year}
-                    </div>
-                    <div className="p-3 bg-gray-800 rounded-lg text-xs text-gray-300 leading-relaxed max-h-40 overflow-y-auto">
-                      {selectedNode.data.abstract}
-                    </div>
-                    <a
-                      href={selectedNode.data.doi ? `https://doi.org/${selectedNode.data.doi}` : '#'}
-                      target="_blank"
-                      rel="noopener"
-                      className="block text-center w-full py-2 bg-gray-800 hover:bg-gray-700 rounded text-xs text-green-400 font-semibold transition-colors"
-                    >
-                      View Full Paper ↗
-                    </a>
+                    <h3 className="font-bold text-white leading-snug">{selectedNode.data.label || selectedNode.data.title}</h3>
+                    {selectedNode.data.authors && (
+                      <div className="text-xs text-gray-400">
+                        {Array.isArray(selectedNode.data.authors) ? selectedNode.data.authors.join(', ') : selectedNode.data.authors} • {selectedNode.data.year}
+                      </div>
+                    )}
+                    {selectedNode.data.abstract && (
+                      <div className="p-3 bg-gray-800 rounded-lg text-xs text-gray-300 leading-relaxed max-h-40 overflow-y-auto">
+                        {selectedNode.data.abstract}
+                      </div>
+                    )}
+                    {selectedNode.data.citations && (
+                      <div className="text-xs text-gray-400">
+                        Citations: {selectedNode.data.citations}
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {selectedNode.type === 'claim' && (
                   <div className="space-y-3">
-                    <div className={`p-2 rounded text-xs font-bold text-center uppercase tracking-wide
-                                    ${selectedNode.data.validation_status === 'verified' ? 'bg-green-900/50 text-green-400 border border-green-900' :
-                        selectedNode.data.validation_status === 'suspicious' ? 'bg-red-900/50 text-red-400 border border-red-900' :
-                          'bg-gray-800 text-gray-400'}`}>
-                      {selectedNode.data.validation_status}
-                    </div>
-
-                    <p className="text-sm text-white leading-relaxed font-medium">
-                      &quot;{selectedNode.data.text}&quot;
+                    <p className="text-sm text-white leading-relaxed">
+                      {selectedNode.data.label || selectedNode.data.description}
                     </p>
-
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="p-2 bg-gray-800 rounded">
-                        <div className="text-gray-500 mb-1">Type</div>
-                        <div className="text-gray-300 capitalize">{selectedNode.data.claim_type}</div>
-                      </div>
-                      <div className="p-2 bg-gray-800 rounded">
-                        <div className="text-gray-500 mb-1">Evidence</div>
-                        <div className="text-gray-300 capitalize">{selectedNode.data.evidence_type}</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {selectedNode.type === 'citation' && (
-                  <div className="space-y-3">
-                    <h3 className="font-bold text-white leading-snug">{selectedNode.data.title}</h3>
-                    <div className="flex gap-2">
-                      <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide
-                                    ${selectedNode.data.is_retracted ? 'bg-red-900/50 text-red-400' : 'bg-gray-800 text-gray-400'}`}>
-                        {selectedNode.data.is_retracted ? 'RETRACTED' : 'CITATION'}
-                      </div>
-                      {selectedNode.data.is_relevant ? (
-                        <div className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-green-900/30 text-green-400">
-                          RELEVANT
+                    {selectedNode.data.confidence && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">Confidence:</span>
+                        <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-green-500 rounded-full"
+                            style={{ width: `${selectedNode.data.confidence * 100}%` }}
+                          />
                         </div>
-                      ) : (
-                        <div className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-gray-800 text-gray-500">
-                          NOT RELEVANT
-                        </div>
-                      )}
-                    </div>
-
-                    {selectedNode.data.validation_notes && (
-                      <div className="p-3 bg-gray-800 rounded-lg text-xs text-gray-300 leading-relaxed italic border-l-2 border-green-700">
-                        &quot;{selectedNode.data.validation_notes}&quot;
+                        <span className="text-xs text-gray-300">{Math.round(selectedNode.data.confidence * 100)}%</span>
                       </div>
                     )}
-
-                    <a
-                      href={selectedNode.data.doi ? `https://doi.org/${selectedNode.data.doi}` : '#'}
-                      target="_blank"
-                      rel="noopener"
-                      className="block text-center w-full py-2 bg-gray-800 hover:bg-gray-700 rounded text-xs text-blue-400 font-semibold transition-colors disabled:opacity-50"
-                    >
-                      View Source ↗
-                    </a>
-
-                    <button
-                      onClick={() => handleDeepVerify(selectedNode.data)}
-                      className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-lg text-xs font-bold transition-all shadow-lg flex items-center justify-center gap-2 mt-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                      Verify This Citation (Deep Dive)
-                    </button>
+                    {selectedNode.data.consensus_level && (
+                      <div className="text-xs text-gray-400">
+                        Consensus: <span className="capitalize text-gray-300">{selectedNode.data.consensus_level}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
